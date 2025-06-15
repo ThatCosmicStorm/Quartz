@@ -11,6 +11,7 @@
 		- Same name as a conlang I made a few years ago
 		- Just sounds pretty cool
 	- SpaCeR
+ 		- "Space" because every token is spaced out.
 		- "C" because the family gave inspiration for the braces and semicolons.
 		- "R" because it stands for Readability :)
 - If you have any suggestions, please let me know.
@@ -22,6 +23,10 @@
 // This is a comment.
 {code stuff} // This is also a comment!
 ```
+## iv. "ReadAbl Sucks" Warning
+- Feel free to flame me for anything that sucks or doesn't make sense.
+	- You may see **a lot** of things lol.
+ 	- Buckle up.
 ## I. Universal Command Syntax
 - IMPORTANT: Indents are 4 spaces long.
 ---
@@ -298,4 +303,4 @@ else :
 - \* I'm leaving the caret symbol `^` to represent exponentiation, again, having the proper symbol do its job.
 
 # WORK IN PROGRESS...
-- I will definitely split these main sections into their own files later.
+- I will definitely split the main sections into their own files later.
