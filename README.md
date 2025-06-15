@@ -93,7 +93,7 @@ cmd :: cond : { arg }
 	1. `init`
 		- Used to declare variables and assigns an initial value.
 	2. `resign`
-		- Used to reassign (herby referred to as resign) a new value to a declared variable.
+		- Used to reassign (hereby referred to as resign) a new value to a declared variable.
 ### II.A. Data Types
 - The data types in ReadAbl are:
 	- `int` for integers
@@ -145,7 +145,7 @@ init : { variable1  4 ; var 2  "among us" }
 	- This leaves the equals sign operator to do its actual job: to compare!
 ---
 - For the sake of brevity, all subsequent commands will be written in **Form 1**.
-	- Notwithstanding this, feel free to use Form 2 wherever you see fit.
+	- Notwithstanding this, feel free to use Form 2 whenever you see fit.
 ### II.C. Intro to Modes and Resignability
 #### II.C.1. Modes
 - Using the data types we saw earlier, we can initialize a variable in a specific mode, meaning it can only be resigned a value of the data type associated with that mode.
@@ -161,7 +161,7 @@ init :
 - Do you notice how the unique ReadAbl spacing creates separate columns w/o any need for separators?
 #### II.C.2. Resignability
 - We can initialize a variable w/o the ability to be resigned.
-	- This is similar to immutability in Python, except we can assign this property whenever, wherever.
+	- This is similar to immutability in Python, except we can attach the Not Resignable property at any time to any Resignable variable.
 	- `-r` means Not Resignable.
 ```
 init :
@@ -209,21 +209,26 @@ prop :: add mode float :
 }
 ```
 #### II.E.2. Resignability
-- Remember how `-r` means Not Resignable?
-- Likewise, `+r` means Resignable.
+- If we initialized a variable as Resignable but wanted to later make it Not Resignable, we can use `-r` as a condition word.
 ```
-prop :: +r :
+init :
 {
-    num5 ; // num5 is now Resignable!
+    num5  7 ; 
 }
 
 prop :: -r :
 {
-    num5 ; // Back to Not Resignable.
+    num5 ; // Now Not Resignable!
+}
+
+resign :: 5 :
+{
+    num5 ; // ERROR; Not Resignable
 }
 ```
 #### II.E.3. Modifiability
-- Taking the same logic as Resignability, you can use `-m` to make a variable Not Modifiable and `+m` to make it Modifiable.
+- Taking the same logic as Resignability, you can use `-m` to turn an initialized Modifiable variable into Not Modifiable.
+	- You can also initialize a variable as Not Modifiable.
 ```
 prop :: -m :
 {
@@ -235,14 +240,14 @@ prop :: add mode int :
     var1 ; // ERROR: Not Modifiable
 }
 
-prop :: +m :
+init :
 {
-    var1 ; // Modifiable
+    -m var2  3 ; 
 }
 
 prop :: add mode int :
 {
-    var1 ; // Added int mode
+    var2 ; // ERROR: Not Modifiable
 }
 ```
 ## III. Conditional Statements
