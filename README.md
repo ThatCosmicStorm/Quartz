@@ -57,7 +57,7 @@ cmd : { arg } // #2
 - While both forms are syntactically correct, it may be better to use Form 1 and 2 at different times to improve readability.
 #### I.A.1. Form 1
 - Default form, a.k.a., Form 1 will usually be the main form you'll use.
-- It is used when there are multiple arguments to display or if a single argument simply has a long name (> 25 characters).
+- It is used when there are more than two arguments to display or if the entire command is simply long (up to you to determine what length that is).
 ```
 // Form 1
 cmd :
@@ -69,12 +69,12 @@ cmd :
 
 cmd :
 {
-    this_is_a_long_argument_name ;
+    this_is_a_long_argument_name_fr_fr_ong_ngl ;
 }
 ```
 #### 1.A.2. Form 2
 - Condensed form, a.k.a., Form 2, will usually be the more uncommon form you'll use, but it still has its place.
-- It is used when you have a single, small argument to display, or even multiple, small arguments.
+- It is used to condense the syntax needed when you have a single argument (or even two) to display.
 ```
 // Form 2
 cmd : { arg }
@@ -149,34 +149,32 @@ init : { variable1  4 ; var 2  "among us" }
 	- All you need is a minimum of two spaces.
 	- This leaves the equals sign operator to do its actual job: to compare!
 ---
-- For the sake of brevity, all subsequent commands will be written in **Form 1**.
-	- Notwithstanding this, feel free to use Form 2 whenever you see fit.
-### II.C. Intro to Modes and Resignability
+- Sidenote: all subsequent commands will be written in either Form 1 or Form 2 simply depending on which is more fitting to me.
+### II.C. Intro to Modes and Locks
 #### II.C.1. Modes
 - Using the data types we saw earlier, we can initialize a variable in a specific mode, meaning it can only be resigned a value of the data type associated with that mode.
 	- Ex. `int mode` means the value can only be resigned another integer
 ```
 init :
 {
-    num         3   ; // No mode
-    int num2    4   ; // int mode
+    num        3   ; // No mode
+    int num2   4   ; // int mode
     float num3  5.0 ; // float mode
 }
 ```
 - Do you notice how the unique ReadAbl spacing creates separate columns w/o any need for separators?
-#### II.C.2. Resignability
-- We can initialize a variable w/o the ability to be resigned.
-	- This is similar to immutability in Python, except we can attach the Not Resignable property at any time to any Resignable variable.
-	- `-r` means Not Resignable.
+#### II.C.2. Locking Resignability
+- We can lock a variable at initialization, making sure it cannot be resigned another value.
+	- This is similar to immutability in Python, except we can lock it at any time to any Resignable variable.
+	- `-r` means resignability.
+	- Putting `lock` and `-r` before the variable locks its resignability.
 ```
-init :
-{
-    num4      5 ;
-    -r num5   7 ; // Cannot be resigned
-}
+init : { num4  5 ; lock-r num5  7 } // num5 cannot be resigned!
 ```
+- Pay attention to how the `lock` and `-r` are not separated.
 ### II.D. Resigning a Variable
 - To resign an initialized variable, use `resign`.
+	- The **value** is the condition while the **variables** are the arguments.
 ```
 // Let's go through the `num` variables we initialized earlier.
 resign :: 9 :
@@ -185,75 +183,59 @@ resign :: 9 :
     num2 ; // num2 = 9 (because it's in int mode)
     num3 ; // ERROR: Float mode
     num4 ; // num4 = 9
-    num5 ; // ERROR: Not Resignable
+    num5 ; // ERROR: Locked
+}
+```
+#### II.D.1. Resigning an Array or List
+- You can actually flip the syntax for `resign` when arrays or lists are involved.
+	- The **variable** is now the condition while the **values** are the arguments.
+```
+resign :: lst1 :
+{
+    1 ;
+    3 ;
+    4 ;
 }
 ```
 ### II.E. Modifying a Variable's Properties
 - The `resign` command can only change a variable's value.
-- So to change a variable's properties, e.g., mode, resignability, etc., we need a separate command: `prop`.
+- So to modify a variable's properties, e.g., mode, resignability, etc., we need a separate command: `mod`.
 #### II.E.1. Modes
-- With the condition word `mode`, we can change a variable's mode.
-- To rid a variable of its current mode, put the condition word `rid` before `mode`.
+- With the argument word `mode`, we can change a variable's mode.
+- To rid a variable of its current mode, put the argument word `rid` before `mode`.
 ```
-prop :: rid mode :
-{
-    num3 ; // Removed float mode
-}
+mod :: num3 : { rid mode } // Removed current mode 
 ```
-- To add a mode to a variable, put the condition word `add` before `mode` and the data type after.
+- To add a mode to a variable, put the argument word `add` before `mode` and the data type after.
 	- Variables can have multiple modes simultaneously!
 ```
-prop :: add mode int :
-{
-    num3 ; // Added int mode
-}
+mod :: num3 : { add mode int } // Added int mode
 
-prop :: add mode float :
-{
-    num3 ; // Added float mode alongside int mode
-}
+mod :: num3 : { add mode float } // Added float mode alongside int mode
 ```
 #### II.E.2. Resignability
-- If we initialized a variable as Resignable but wanted to later make it Not Resignable, we can use `-r` as a condition word.
+- If we initialized a variable as Resignable but wanted to lock it later, we can use `lock` as a condition word.
 ```
-init :
-{
-    num5  7 ; 
-}
+init : { num5  7 }
 
-prop :: -r :
-{
-    num5 ; // Now Not Resignable!
-}
+mod :: num5 : { lock-r } // Resignability locked
 
-resign :: 5 :
-{
-    num5 ; // ERROR; Not Resignable
-}
+resign :: 5 : { num5 } // ERROR: Resignability locked
 ```
 #### II.E.3. Modifiability
-- Taking the same logic as Resignability, you can use `-m` to turn an initialized Modifiable variable into Not Modifiable.
-	- You can also initialize a variable as Not Modifiable.
+- Taking the same logic as Resignability, you can use `-m` to lock a variable's Modifiability.
+	- You can also lock the variable at initalization.
 ```
-prop :: -m :
-{
-    var1 ; // Not Modifiable
-}
+// Lock variable through modification
 
-prop :: add mode int :
-{
-    var1 ; // ERROR: Not Modifiable
-}
+mod :: var1 : { lock-m }
 
-init :
-{
-    -m var2  3 ; 
-}
+mod :: var1 : { add mode int } // ERROR: Modifiability locked
 
-prop :: add mode int :
-{
-    var2 ; // ERROR: Not Modifiable
-}
+// Lock variable at initialization
+init : { lock-m var2  3 }
+
+mod :: var2 : { add mode int } // ERROR: Modifiability locked
 ```
 ## III. Conditional Statements
 - `if`, `elif`, and `else` work like Python.
