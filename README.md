@@ -16,17 +16,11 @@
  		- "R" because it stands for Readability
 - If you have any suggestions or like Readabl as is, please let me know.
 - If you have any suggestions for a new logo or like it as is, please let me know.
-## iii. Clear Syntax
-- Clear syntax is a **big** part of readability.
-- In ReadAbl, clear syntax means that every symbol has **one** purpose.
-	- It means there is virtually no ambiguity with what a command/symbol is doing.
-- Clear syntax also means that the syntax is inherently made for readability.
-	- Of course, readability is subjective to a degree, so there is a fair amount of flexability that one can take when using ReadAbl.
-## iv. "ReadAbl Sucks" Warning
+## iii. "ReadAbl Sucks" Warning
 - Before we get into any actual features, here's a fair warning: ReadAbl may suck.
 - I am giving you explicit permission to **flame me for anything** that sucks or doesn't make sense.
 	- You may see **a lot** of things lol.
  	- Buckle up.
-# v. WORK IN PROGRESS
+# iv. WORK IN PROGRESS
 - Everything shown about ReadAbl is incomplete and subject to change.
 - To move on to the actual semantics of ReadAbl, go to the Docs folder.
