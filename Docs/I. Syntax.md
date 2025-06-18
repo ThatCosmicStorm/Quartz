@@ -91,16 +91,16 @@ func
 // Unordered
 func
 {
-    [ arg1 , val1 ] ;
-    [ argument1 , value1 ] ;
-    [ this_is_an_argument1 , this_is_a_value1 ] ;
+    [ i1 , i2 ] ;
+    [ item1 , item2 ] ;
+    [ this_is_an_item1 , this_is_another_item2 ] ;
 }
 // Columns
 func
 {
-    [ arg1                 , val1             ] ;
-    [ argument1            , value1           ] ;
-    [ this_is_an_argument1 , this_is_a_value1 ] ;
+    [ i1               , i2                    ] ;
+    [ item1            , item2                 ] ;
+    [ this_is_an_item1 , this_is_another_item2 ] ;
 }
 ```
 - Do you notice how the unique ReadAbl spacing creates separate columns w/o any need for a separator symbol?
