@@ -65,7 +65,7 @@ func { arg1 ; arg2 } // Semicolon REQUIRED
   - Conditions are statements that get evaluated as True or False.
   - See V. Control Stuctures.
 
-```rdbl
+``` rdbl
 // Form 1
 macro :: cond
 {
@@ -82,11 +82,13 @@ macro :: cond {
 macro :: cond { arg }
 ```
 
-## I.E. Lining Up (Stylistic Choice)
 
 - It's *recommended* in ReadAbl to line up your semicolons.
   - Get mad. Don't do it. It's **not required** in the slightest.
   - Just remember what ReadAbl is about: *readability!*
+## I.F. Lining Up (The ReadAbl Choice)
+
+- It's *recommended* but **not required** in ReadAbl to line up your semicolons.
 
 ``` rdbl
 // Unordered
@@ -105,7 +107,7 @@ func
 }
 ```
 
-### I.E.1. Columns
+### I.F.1. Columns
 
 - It's also *recommended* but **not required** to line up certain values to one another.
 
@@ -125,5 +127,3 @@ func
     [ this_is_an_item1 , this_is_another_item2 ] ;
 }
 ```
-
-- Do you notice how the unique ReadAbl spacing creates separate columns w/o any need for a separator symbol?
