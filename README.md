@@ -26,11 +26,10 @@
 define FizzBuzz(n) {
     for item in 1..(n+1) {
         item
-        >>
-        >> if _ % 15 == 0 => "FizzBuzz" // Underscore represents `item`
-        >> otif % 3  == 0 => "Fizz"     // Underscore is actually optional!
-        >> otif % 5  == 0 => "Buzz"
-        >> else           =>            // Implied that `item` slips through unscathed.
+        >> if _ % 15 == 0 ~> "FizzBuzz" // Underscore represents `item`
+        >> otif % 3  == 0 ~> "Fizz"     // Underscore is actually optional!
+        >> otif % 5  == 0 ~> "Buzz"
+        >> else           ~>            // Implied that `item` slips on through.
         >> write
     }
 }
