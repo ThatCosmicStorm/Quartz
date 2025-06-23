@@ -16,7 +16,7 @@
 - Functional pipelines
   - Clear, modular composition with `>>`
 - Expressive branching
-  - Inline syntax with `then` / `if` and `else`
+  - `branch` out with `if`, `otif`, and `else`
 - Eases debugging
   - Tools like `tap()` allow you to observe the data as it goes through the pipe
 
@@ -26,11 +26,11 @@
 define FizzBuzz(n) {
     for item in 1..(n+1) {
         item
-        >> then
-            if _ % 15 == 0 => "FizzBuzz" // Underscore represents `item`
-            otif % 3  == 0 => "Fizz" // Underscore is actually optional!
-            otif % 5  == 0 => "Buzz"
-            else           => _
+        >>
+        >> if _ % 15 == 0 => "FizzBuzz" // Underscore represents `item`
+        >> otif % 3  == 0 => "Fizz"     // Underscore is actually optional!
+        >> otif % 5  == 0 => "Buzz"
+        >> else           =>            // Implied that `item` slips through unscathed.
         >> write
     }
 }
