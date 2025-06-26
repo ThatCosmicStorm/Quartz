@@ -5,46 +5,22 @@
 ## i. Introduction
 
 - Welcome to Quartz!
-- Quartz (formerly known as ReadAbl) is a high-level interpreted language.
-- Inspired by flow-based programming, Quartz is based on pipe-based composition, that is, taking data through a "pipe" of chained functions!
-- Quartz also likes to emphasize readability, in-line transformation, and functional clarity.
+- Quartz (formerly known as ReadAbl) is a **high-level** *interpreted* language.
+- While inspired by flow-based programming, Quartz focuses on the *functional programming* paradigm.
+- Quartz loves pipe-based composition, i.e., taking data through a "pipe" of chained functions.
 
-## ii. Why Quartz?
+## ii. Example Code
 
-- Readable by default
-  - Transforms data like you're telling a story
-- Functional pipelines
-  - Clear, modular composition with `>>`
-- Expressive branching
-  - `branch` out with `if`, `otif`, and `else`
-- Eases debugging
-  - Tools like `tap()` allow you to observe the data as it goes through the pipe
+- Once concepts have been decently solidified, this section will be properly updated.
 
-## iii. FizzBuzz Example Code
+## iii. Contributing to Quartz
 
-``` qrtz
-define FizzBuzz(n) {
-    for item in 1..(n+1) {
-        item
-        >> if _ % 15 == 0 ~> "FizzBuzz" // Underscore represents `item`
-        >> otif % 3  == 0 ~> "Fizz"     // Underscore is actually optional!
-        >> otif % 5  == 0 ~> "Buzz"
-        >> else           ~>            // Implied that `item` slips on through.
-        >> write
-    }
-}
-```
-
-## iv. Contributing to Quartz (WARNING!)
-
-- WARNING: Quartz may suck.
-- I am giving you explicit permission to **flame me for anything** that sucks or doesn't make sense.
-  - You may see **a lot** of things lol.
+- WARNING: Quartz may look and feel awful to you (at first).
 - Have any ideas/suggestions to improve Quartz?
-- Open an issue on GitHub or contact me directly!
-  - I'm friendly, promise :)
+- Open an issue on GitHub (with the appropriate label, of course)!
+  - I'll respond as soon as I am able and can formulate a good response.
 
-## v. WORK IN PROGRESS
+## iv. WORK IN PROGRESS
 
 - Everything shown about Quartz is incomplete and subject to change.
 - The language is mainly a concept, so you can't play around with it *yet*.
