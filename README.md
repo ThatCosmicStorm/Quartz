@@ -6,7 +6,7 @@
 
 - Welcome to Quartz!
 - Quartz (formerly known as ReadAbl) is a **high-level** *interpreted* language.
-- While inspired by flow-based programming, Quartz focuses on the *functional programming* paradigm.
+- While inspired by flow-based programming, Quartz focuses on *imperative* and *functional* programming.
 - Quartz loves pipe-based composition, i.e., taking data through a "pipe" of chained functions.
 
 ## ii. Example Code
