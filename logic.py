@@ -1,68 +1,106 @@
+"""
+The logic behind Quartz.
+This module currently includes token definitions and a lexer.
+"""
+
+##############################
+# TOKEN DEFINITIONS
+##############################
+
 DIGITS = "0123456789"
 
-token_dict = {
-    "+" : "PLUS",
-    "-" : "MINUS",
-    "*" : "MUL",
-    "/" : "DIV",
-    "{" : "L_BRACE",
-    "}" : "R_BRACE",
-    ":" : "COLON",
-    ";" : "SEMI"
-}
+SINGLE_CHAR = [
+    "{", "}",
+    "(", ")",
+    "[", "]",
+    ":", ";",
+    ",", ".",
+    "_",
+    "=",
+    "\'", "\"",
+    "+", "-",
+    "*",
+    "/", "%",
+    "&", "|",
+    "^", "~",
+    "<", ">"
+]
+MULTI_CHAR = [
+    ">>",
+    "~>",
+    "//",
+    "..",
+    "#[",
+    "**",
+    "==",
+    "!=",
+    ">=",
+    "<=",
+    "&&",
+    "||",
+    "!!",
+    ">>>",
+    "<<<",
+
+]
+KEYWORDS = [
+    "if",
+    "else",
+    "for",
+    "forEach",
+    "while",
+    "print",
+    "append",
+    "appendTo",
+    "TRUE",
+    "FALSE",
+    "AND",
+    "OR",
+    "NOT",
+    "is",
+    "in",
+    "not"
+]
+TOKEN_LIST = SINGLE_CHAR + MULTI_CHAR + KEYWORDS
+
+##############################
+# LEXER
+##############################
 
 
-def tokens(program):
-    program = str(program)
-    tokens = []
-    characters = []
-    chars = characters
-    word = ""
+def lexer(program: str) -> list:
+    """
+    Separate tokens in a program.
+    """
+    whitespace = " "
+    prog = program + whitespace
+    lex_list = []
+    token = ''
 
-    for char in range(0, len(program)):
-        chars.append(program[char])
+    for i, char in enumerate(prog):
 
-    for char in range(0, len(chars)):
-        if chars[char] != " ":
-            word += chars[char]
+        # If the character isn't whitespace, concatenate it.
+        if char != whitespace:
+            token += char
+
+        if i+1 < len(prog):
+            next_char = prog[i + 1]
         else:
-            tokens.append(word)
-            word = ""
-    tokens.append(word)
+            next_char = None     # Prevents invalid index error.
 
-    return tokens
+        if (next_char is None
+                or next_char == whitespace
+                or next_char in TOKEN_LIST
+                or token in TOKEN_LIST):
 
+            poss_token = token + next_char if next_char is not None else ""
 
-def label(value, string, lst):
-    label = value + " : " + string
-    lst.append(label)
+            # Prevents multi-char tokens from being split up.
+            if poss_token in TOKEN_LIST:
+                continue
 
+            if token:
+                lex_list.append(token)
+                token = ''
 
-def digit_check(string):
-    digit = 0
-    for i in range(0, len(string)):
-        if string[i] in DIGITS: digit += 1
-    if digit == len(string): return "INT"
-    else: return "UNKNOWN"
-
-
-def lexer(program):
-    token_list = tokens(program)
-    labels = []
-
-    for tok in range(0, len(token_list)):
-        if token_list[tok] in token_dict:
-            label(
-                token_dict[token_list[tok]],
-                token_list[tok],
-                labels
-            )
-
-        else:
-            label(
-                digit_check(token_list[tok]),
-                token_list[tok],
-                labels
-            )
-
-    return print(labels)
+    return lex_list
