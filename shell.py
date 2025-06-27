@@ -1,13 +1,18 @@
-import logic, os
+"""
+Shell for Quartz
+"""
+import os
+import logic
 
 os.system("cls" if os.name == "nt" else "clear")
 
-version = "InDev"
-version_date = "June 20, 2025"
+VERSION = "InDev"
+VERSION_DATE = "June 27, 2025"
 
-print(f"ReadAbl {version} ({version_date})")
+print(f"Quartz {VERSION} ({VERSION_DATE})")
 
-running = True
-while running:
+RUNNING = True
+while RUNNING:
     program = input(">>> ")
-    logic.lexer(program)
+    output = logic.lexer(program)
+    print(output)
