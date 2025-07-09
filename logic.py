@@ -9,79 +9,107 @@ This module currently includes token definitions and a lexer.
 
 DIGITS = "0123456789"
 
-SINGLE_CHAR = [
-    "{", "}",
-    "(", ")",
-    "[", "]",
-    ":", ";",
-    ",", ".",
-    "_",
-    "=",
-    "\'", "\"",
-    "+", "-",
-    "*",
-    "/", "%",
-    "&", "|",
-    "^", "~",
-    "<", ">"
-]
-MULTI_CHAR = [
-    ">>",
-    "~>",
-    "//",
-    "..",
-    "#[",
-    "**",
-    "==",
-    "!=",
-    ">=",
-    "<=",
-    "&&",
-    "||",
-    "!!",
-    ">>>",
-    "<<<",
+SINGLE_CHAR = {
+    "{" : "LBRACE",
+    "}" : "RBRACE",
+    "(" : "LPAREN",
+    ")" : "RPAREN",
+    "[" : "LBRACK",
+    "]" : "RBRACK",
+    ":" : "COLON",
+    ";" : "SEMICOLON",
+    "," : "COMMA",
+    "." : "PERIOD",
+    "=" : "EQUALS_SIGN",
+    "\'" : "SINGLE_QUOTE",
+    "\"" : "DOUBLE_QUOTE",
+    "+" : "ADD",
+    "-" : "SUBTRACT",
+    "*" : "MULTIPLY",
+    "/" : "DIVIDE",
+    "%" : "MODULO",
+    "&" : "BITAND",
+    "|" : "BITOR",
+    "~" : "BITNOT",
+    "^" : "BITXOR",
+    "<" : "LESS_THAN",
+    ">" : "GREATER_THAN",
+    "!" : "NOT"
+}
 
-]
-KEYWORDS = [
-    "if",
-    "else",
-    "for",
-    "forEach",
-    "while",
-    "print",
-    "append",
-    "appendTo",
-    "TRUE",
-    "FALSE",
-    "AND",
-    "OR",
-    "NOT",
-    "is",
-    "in",
-    "not"
-]
-TOKEN_LIST = SINGLE_CHAR + MULTI_CHAR + KEYWORDS
+MULTI_CHAR = {
+    ">>" : "PIPE",
+    "~>" : "MATCH_ARROW",
+    "==" : "EQUALS",
+    "!=" : "NOT_EQUALS",
+    ">=" : "GREAT_OR_EQUAL",
+    "<=" : "LESS_OR_EQUAL",
+    "//" : "FLOOR_DIVIDE",
+    "**" : "EXPONENTIATE",
+    ".." : "RANGE",
+    "..=" : "RANGEINCLUDE",
+    "#{" : "HASHSTART",
+    "&&" : "AND",
+    "||" : "OR",
+    ">>>" : "BITRSHIFT",
+    "<<<" : "BITLSHIFT",
+}
+
+DATA_TYPES = {
+    "str" : "STRING",
+    "int" : "INTEGER",
+    "float" : "FLOAT",
+    "tuple" : "TUPLE",
+    "list" : "LIST",
+    "hash" : "HASHMAP",
+    "bool" : "BOOLEAN",
+    "None" : "NONE"
+}
+
+ESSENTIALS = {
+    "if" : "IF",
+    "else" : "ELSE",
+    "for" : "FOR",
+    "forEach" : "FOR_EACH",
+    "while" : "WHILE",
+    "define" : "DEFINE",
+    "TRUE" : "TRUE",
+    "FALSE" : "FALSE",
+    "and" : "AND",
+    "or" : "OR",
+    "not" : "NOT",
+    "is" : "IS",
+    "in" : "IN"
+}
+
+COMMANDS = {
+    "print" : "PRINT",
+    "append" : "APPEND",
+    "appendTo" : "APPEND_TO"
+}
+
+LEXEME_DICT = SINGLE_CHAR | MULTI_CHAR | DATA_TYPES | ESSENTIALS | COMMANDS
 
 ##############################
 # LEXER
 ##############################
 
 
-def lexer(program: str) -> list:
+def lexer(program: str) -> dict:
     """
-    Separate tokens in a program.
+    Separate lexemes in a program.
     """
     whitespace = " "
     prog = program + whitespace
     lex_list = []
-    token = ''
+    lex_dict = {}
+    lexeme = ''
 
     for i, char in enumerate(prog):
 
         # If the character isn't whitespace, concatenate it.
         if char != whitespace:
-            token += char
+            lexeme += char
 
         if i+1 < len(prog):
             next_char = prog[i + 1]
@@ -90,17 +118,23 @@ def lexer(program: str) -> list:
 
         if (next_char is None
                 or next_char == whitespace
-                or next_char in TOKEN_LIST
-                or token in TOKEN_LIST):
+                or next_char in LEXEME_DICT
+                or lexeme in LEXEME_DICT):
 
-            poss_token = token + next_char if next_char is not None else ""
+            poss_lexeme = lexeme + next_char if next_char is not None else ""
 
             # Prevents multi-char tokens from being split up.
-            if poss_token in TOKEN_LIST:
+            if poss_lexeme in LEXEME_DICT:
                 continue
 
-            if token:
-                lex_list.append(token)
-                token = ''
+            if lexeme:
+                lex_list.append(lexeme)
+                lexeme = ""
 
-    return lex_list
+    for i, char in enumerate(lex_list):
+        if char in LEXEME_DICT:
+            lex_dict[char] = LEXEME_DICT[char]
+        else:
+            lex_dict[char] = "UNKNOWN"
+
+    return lex_dict
