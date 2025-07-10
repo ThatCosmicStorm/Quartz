@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 DIGITS = "0123456789"
 
-OPERATORS = [
+OPERATORS = {
     "=", "<-",
     ">>", "??", "::", ";;", "~>",
     "+", "-", "*", "/",
@@ -22,38 +22,38 @@ OPERATORS = [
     "&", "|", "~", "^",
     ">>>", "<<<",
     "&&", "||", "!"
-]
+}
 
-SYMBOLS = [
+SYMBOLS = {
     "{", "#{", "}",
     "(", ")",
     "[", "]",
     ":", ";",
     ".", ",",
     "//"
-]
+}
 
-KEYWORDS = [
+KEYWORDS = {
     "if", "else",
     "for", "forEach",
     "while",
     "define", "return",
     "is", "in", "not"
     "and", "or"
-]
+}
 
-DATA_TYPES = [
+DATA_TYPES = {
     "str",
     "int", "float",
     "tuple", "list", "hash",
     "bool",
     "None"
-]
+}
 
-IDENTIFIERS = [
+IDENTIFIERS = {
     "print",
     "append", "appendTo"
-]
+}
 
 LEXEME_LIST = OPERATORS + SYMBOLS + KEYWORDS + DATA_TYPES + IDENTIFIERS
 
