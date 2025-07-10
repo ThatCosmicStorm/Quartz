@@ -55,55 +55,71 @@ IDENTIFIERS = {
     "append", "appendTo"
 }
 
-LEXEME_LIST = OPERATORS + SYMBOLS + KEYWORDS + DATA_TYPES + IDENTIFIERS
-
 ##############################
 # LEXER
 ##############################
 
 
-def separate_lexemes(program: str) -> list:
+def tokenize(program):
     """
-    Separate lexemes in a program.
+    Turn raw text into a list of tokens (strings).
     """
-    whitespace = " "
-    prog = program + whitespace
-    lex_list = []
-    lexeme = ''
 
-    for i, char in enumerate(prog):
+    tokens = []
+    i, n = 0, len(program)
 
-        # If the character isn't whitespace, concatenate it.
-        if char != whitespace:
-            lexeme += char
+    while i < n:
+        char = program[i]
 
-        if i+1 < len(prog):
-            next_char = prog[i + 1]
-        else:
-            next_char = None     # Prevents invalid index error.
+        # Skip whitespace
+        if char.isspace():
+            i += 1
+            continue
 
-        if (next_char is None
-                or next_char == whitespace
-                or next_char in LEXEME_LIST
-                or lexeme in LEXEME_LIST):
+        matched = False
 
-            poss_lexeme = lexeme + next_char if next_char is not None else ""
+        # Match multi-char operators/symbols first.
+        for cand in sorted(OPERATORS | SYMBOLS, key=len, reverse=True):
+            if program.startswith(cand, i):
+                tokens.append(cand)
+                i += len(cand)
+                matched = True
+                break
+        if matched:
+            continue
 
-            if char in DIGITS and next_char == ".":
-                continue
+        if char.isdigit():
+            start = i
+            has_dot = False
+            while (i < n and (program[i].isdigit()
+                        or (program[i]=="." and not has_dot))):
+                if program[i] == ".":
+                    has_dot = True
+                i += 1
+            tokens.append(program[start:i])
+            continue
 
-            if char == "." and next_char in DIGITS:
-                continue
+        if char.isalpha() or char == "_":
+            start = i
+            while (i < n and (program[i].isalnum() or program[i] == "_")):
+                i += 1
+            tokens.append(program[start:i])
+            continue
 
-            # Prevents multi-char tokens from being split up.
-            if poss_lexeme in LEXEME_LIST:
-                continue
+        if char == '"':
+            start = i
+            i += 1
+            while i < n and program[i] != '"':
+                i += 1
+            i += 1
+            tokens.append(program[start:i])
+            i += 1
+            continue
 
-            if lexeme:
-                lex_list.append(lexeme)
-                lexeme = ""
+        tokens.append(char)
+        i += 1
 
-    return lex_list
+    return tokens
 
 
 @dataclass
@@ -121,39 +137,27 @@ def lexer(program: str) -> list:
     Loosely categorizes lexemes.
     """
 
-    lexemes = separate_lexemes(program)
-    digit_check = 0
+    lexemes = tokenize(program)
     token_list = []
 
     for i, char in enumerate(lexemes):
         if char in OPERATORS:
-            token_list.append(Token(i, char, "Operator"))
+            typ =  "Operator"
         elif char in SYMBOLS:
-            token_list.append(Token(i, char, "Symbol"))
+            typ = "Symbol"
         elif char in KEYWORDS:
-            token_list.append(Token(i, char, "Keyword"))
+            typ = "Keyword"
         elif char in DATA_TYPES:
-            token_list.append(Token(i, char, "Data Type"))
-
-        elif char in ("TRUE", "FALSE"):
-            token_list.append(Token(i, char, "Boolean"))
-
-        elif char[0] == "\"" and char[-1] == "\"":
-            token_list.append(Token(i, char, "String"))
-
-        elif char[0] in DIGITS:
-            for tup in enumerate(char):
-                if tup[1] in DIGITS:
-                    digit_check += 1
-            if digit_check == len(char):
-                token_list.append(Token(i, char, "Integer"))
-            elif "." in char:
-                token_list.append(Token(i, char, "Float"))
-
-        elif "." in char:
-            token_list.append(Token(i, char, "Float"))
-
+            typ = "Data Type"
+        elif char in {"TRUE", "FALSE"}:
+            typ = "Boolean"
+        elif char.startswith('"'):
+            typ = "String"
+        elif char.replace(".", "", 1).isdigit():
+            typ = "Float" if "." in char else "Integer"
         else:
-            token_list.append(Token(i, char, "Identifier"))
+            typ = "Identifier"
+
+        token_list.append(Token(i, char, typ))
 
     return token_list
