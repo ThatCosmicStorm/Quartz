@@ -5,17 +5,29 @@
 ## i. Introduction
 
 - Welcome to Quartz!
-- Quartz (formerly known as ReadAbl) is a **high-level** *interpreted* language.
-- While inspired by flow-based programming, Quartz focuses on *imperative* and *functional* programming.
-- Quartz loves pipe-based composition, i.e., taking data through a "pipe" of chained functions.
+- Quartz is a **high-level** *interpreted* language.
+- Quartz's forte is pipe-based composition, i.e., taking data through a "pipe" of chained functions.
 
 ## ii. Example Code
 
-- Once concepts have been decently solidified, this section will be properly updated.
+- Take the following Python code.
+
+``` py
+print(" HELLO WORLD ".strip().upper())
+```
+
+- In contrast, here's how you would write it in Quartz.
+
+``` qrtz
+" HELLO WORLD " >> trim >> upper >> print
+```
+
+- Comparing the two, Quartz conveys a much easier flow of functions.
+  - First, you show the data you want to transform or perform an action with.
+  - Then, you show each transformation and/or action step-by-step.
 
 ## iii. Contributing to Quartz
 
-- WARNING: Quartz may look and feel awful to you (at first).
 - Have any ideas/suggestions to improve Quartz?
 - Open an issue on GitHub (with the appropriate label, of course)!
   - I'll respond as soon as I am able and can formulate a good response.
