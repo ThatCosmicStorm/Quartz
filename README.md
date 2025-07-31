@@ -13,13 +13,13 @@
 - Take the following Python code.
 
 ``` py
-print(" HELLO WORLD ".strip().upper())
+print(" HELLO WORLD ".strip().lower())
 ```
 
 - In contrast, here's how you would write it in Quartz.
 
 ``` qrtz
-" HELLO WORLD " >> trim >> upper >> print
+" HELLO WORLD " >> trim >> lower :> print
 ```
 
 - Comparing the two, Quartz conveys a much easier flow of functions.
