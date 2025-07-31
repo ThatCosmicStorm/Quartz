@@ -67,9 +67,14 @@ def tokenize(program: str) -> list:
     i, n = index, length
     big_ops_first = sorted(OPERATORS | SYMBOLS, key=len, reverse=True)
 
+    def peek(program: str, i) -> str:
+        if i+1 != n:
+            return program[i+1]
+        return ""
+
     while i < n:
         char = program[i]
-        next_char = program[i+1] if i+1 != n else ""
+        next_char = peek(program, i)
 
         if char.isspace():
             i += 1
@@ -85,7 +90,7 @@ def tokenize(program: str) -> list:
                    and (program[i] == "*"
                         and next_char == "/")):
                 i += 1
-                next_char = program[i+1] if i+1 != n else ""
+                next_char = peek(program, i)
             i += 1
             continue
 
@@ -116,7 +121,7 @@ def tokenize(program: str) -> list:
                    and (program[i].isdigit()
                         or (program[i]=="." and not has_dot))):
                 if program[i] == ".":
-                    if program[i+1] == ".":
+                    if peek(program, i) == ".":
                         break
                     else:
                         has_dot = True
