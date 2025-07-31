@@ -32,7 +32,7 @@ SYMBOLS = {
 KEYWORDS = {
     "if", "else",
     "for", "forEach",
-    "while",
+    "while", "until",
     "define", "return",
     "is", "in", "not",
     "and", "or",
@@ -42,7 +42,7 @@ KEYWORDS = {
 DATA_TYPES = {
     "str",
     "int", "float",
-    "tuple", "list", "hash",
+    "list", "hash", "set",
     "bool",
     "NONE",
 }
