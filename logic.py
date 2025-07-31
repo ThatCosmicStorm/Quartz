@@ -1,4 +1,4 @@
-"""_Token definitions, tokenizer, lexer, and a parser._
+"""_Token definitions, lexer, and a parser._
 """
 
 ##############################
@@ -52,7 +52,7 @@ DATA_TYPES = {
 ##############################
 
 
-def tokenize(program: str) -> list:
+def lexer(program: str) -> list:
     """_Organize a program into its tokens and types._
 
     Args:
@@ -67,7 +67,7 @@ def tokenize(program: str) -> list:
     i, n = index, length
     big_ops_first = sorted(OPERATORS | SYMBOLS, key=len, reverse=True)
 
-    def peek(program: str, i) -> str:
+    def peek(program: str, i: int) -> str:
         if i+1 != n:
             return program[i+1]
         return ""
