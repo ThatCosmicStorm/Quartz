@@ -1,39 +1,53 @@
 # Quartz
 
-![Quartz logo](https://github.com/thatcosmicstorm/Quartz/blob/main/Quartz_Logo.png)
+<img src="https://github.com/thatcosmicstorm/Quartz/blob/main/Quartz_Logo.png" alt="Quartz logo" width="25%" height="auto">
 
-## i. Introduction
+## Introduction
 
 - Welcome to Quartz!
-- Quartz is a **high-level** *interpreted* language.
-- Quartz's forte is pipe-based composition, i.e., taking data through a "pipe" of chained functions.
+- Quartz is a **high-level interpreted** language.
+- Its defining feature is *pipe-based composition*.
 
-## ii. Example Code
+## Code Snippets
 
 - Take the following Python code.
 
 ``` py
+string = " HELLO WORLD "
 print(" HELLO WORLD ".strip().lower())
 ```
 
-- In contrast, here's how you would write it in Quartz.
+- In contrast, here's how you would, or should, write it in Quartz.
 
 ``` qrtz
-" HELLO WORLD " >> trim >> lower :> print
+string := " HELLO WORLD "
+string -> trim -> lower -> print
 ```
 
-- Comparing the two, Quartz conveys a much easier flow of functions.
-  - First, you show the data you want to transform or perform an action with.
-  - Then, you show each transformation and/or action step-by-step.
+- Comparing the two, Quartz conveys a much more understandable flow of functions.
 
-## iii. Contributing to Quartz
+## Goals
+
+### Main
+
+- **Create a functioning, turing-complete version**
+
+### Design
+
+- Simplistic look and feel, akin to Python
+  - No need for braces and semicolons to flood the program
+- Embraces the off-side rule
+  - No unnecessary colons or "end" keywords
+- Pipe-based composition
+  - The superior way of representing chained functions
+
+## Contributing to Quartz
 
 - Have any ideas/suggestions to improve Quartz?
-- Open an issue on GitHub (with the appropriate label, of course)!
-  - I'll respond as soon as I am able and can formulate a good response.
+- Open an issue on GitHub!
 
-## iv. WORK IN PROGRESS
+## WORK IN PROGRESS
 
-- Everything shown about Quartz is incomplete and subject to change.
-- The language is mainly a concept, so you can't play around with it *yet*.
-- To move on to the actual semantics of Quartz, go to the GitHub Wiki.
+- For now, Quartz is largely theoretical, so you can't play around with it *yet*.
+- Keep in mind, at this stage, everything is subject to change.
+- To read the Quartz documentation, go to the Docs folder.
