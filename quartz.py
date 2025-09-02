@@ -1,18 +1,19 @@
+"""*The Quartz Interpreter:*
+Currently only displays the output of the lexer.
 """
-Shell for Quartz
-"""
+
 import os
 from pprint import pprint
-from logic import lexer
+from lexer import Lexer
 os.system("cls" if os.name == "nt" else "clear")
 
 VERSION = "InDev"
-VERSION_DATE = "July 31, 2025"
+VERSION_DATE = "September 1, 2025"
 
 print(f"Quartz {VERSION} ({VERSION_DATE})")
 
 RUNNING = True
 while RUNNING:
     program = input(">>> ")
-    tokens = lexer(program)
+    tokens = Lexer(program).lexer()
     pprint(tokens)
