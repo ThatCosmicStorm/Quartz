@@ -8,7 +8,7 @@
 ### Augmented EBNF
 
 - The grammar is structured using an augmented form of extended Backus-Naur form (EBNF), a common syntax used for context-free grammar.
-- The EBNF rules are defined below, using `...` to denote contents:
+- My augmented EBNF rules are defined below, using `...` to denote contents:
 
 | Symbol | Definition |
 | - | - |
@@ -21,10 +21,10 @@
 | `"..."` | Literal characters / keywords |
 | `/.../` | Regular-expression notation (regex) |
 
-### Regex
+### Augmented Regex
 
 - Regex is used for defining lexicographical rules, a limitation of EBNF.
-- The rules for regex are defined below, `...` again denoting contents:
+- My augmented regex rules are defined below, `...` again denoting contents:
 
 | Symbol | Defintion |
 | - | - |
@@ -38,7 +38,7 @@
 | `\.` | Literal dot |
 | `.` | Any character |
 
-- Any regex syntax not defined here borrows its definition from EBNF.
+- Any regex syntax not defined here borrows its definition from the augmented EBNF.
 
 ## Current Draft
 
