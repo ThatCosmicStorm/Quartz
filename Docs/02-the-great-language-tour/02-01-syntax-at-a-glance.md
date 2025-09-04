@@ -100,8 +100,8 @@ main()
   - Output
   - Expressions
 - Hopefully, this gives you a better feel for how the syntax works in practice.
-- You don't have to understand what's going on yet!
-- We'll delve into each of these features individually[^5].
+- You don't have to understand what's going on yet[^5]!
+- We'll delve into each of these features individually and more!
 
 ---
 
@@ -111,5 +111,4 @@ main()
 [^3]: What an original, revolutionary goal!
   No one has ever thought of this!
 [^4]: Hard-coded indentation ensures consistency across not only your own program but across all programs ever written.
-[^5]: But if you can read this code, you already know relatively enough to start tinkering.
-  Please keep reading though!
+[^5]: If you already can read this code, keep reading anyway!
