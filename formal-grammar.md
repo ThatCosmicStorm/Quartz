@@ -55,7 +55,8 @@ assignment      = IDENT ("="
                 | "&=" | "|=" | "~=" | "^=" | ">>=" | "<<=" ) (expr
                 | func_call | pipeline)
 func_call       = IDENT "(" expr ")"
-pipeline        = IDENT (("->" IDENT IDENT?) | ("->" func_call))+
+pipeline        = (IDENT | NUMBER | STRING) (("->" IDENT IDENT?)
+                | ("->" func_call))+
 
 compound_stmt   = if_stmt | while_stmt | func_def
 if_stmt         = "if" expr suite {"else" "if" expr suite} ["else" suite]
