@@ -26,27 +26,15 @@ variable := 0
 variable = 11
 ```
 
-- `:=` to **create**
-- `=` to *change*
-
 ## Functions
 
 - Let's make a function.
 
 ```qrtz
-define ourFunction(words) None
-    print(words)
-    return None
+define functionName(parameter, parameter2)
+    print(parameter)
+    print(parameter2)
 ```
-
-- Actually, the function can (and should) look like this:
-
-```qrtz
-define ourFunction(string)
-    print(string)
-```
-
-- And it'll still work.
 
 ## Control Flow
 
@@ -74,6 +62,8 @@ else
 - All together now!
 
 ```qrtz
+x := 5
+
 if x == 5
     x = 2
 else if x == 7
@@ -108,7 +98,7 @@ string -> strip -> lower -> print
 ---
 
 [^1]: Here at Quartz, we know you're a busy person with a packed schedule.
-  So we compacted everything into a minute read!
+  So we made a *lightning fast* intro!
   If that's not your style... keep in mind, it's not ours either.
   Keep reading onward!
 [^2]: You have to agree!
