@@ -26,7 +26,7 @@ x := 5 # In-line
 - Let's *actually* look at Quartz "syntax at a glance."
 
 ```qrtz
-# Mini Dice Roller
+# Dice Roller + REPL
 
 
 define rollDie(sides: int) int
@@ -52,8 +52,22 @@ define rollALot(rolls: int) list
     return results
 
 
+define rollAvg(results: list) int
+    sum := 0
+
+    for result in results:
+        sum += result
+
+    roll_num = results -> len
+
+    # The expression is treated as (sum / roll_num) -> int
+    average := sum / roll_num -> int
+
+    return average
+
+
 define main()
-    print("Welcome to the Mini Dice Roller!")
+    print("Welcome to the Dice Roller!")
 
     RUNNING := True
     while RUNNING
@@ -62,9 +76,14 @@ define main()
         rolls := input -> int
 
         if rolls:
-            rollALot(rolls)
+            results := rollALot(rolls)
         else:
             print("No rolls? Feeling unlucky today? I get it.")
+
+        print("Would you like to know your average roll? (y/n)")
+
+        if input() == "y":
+            results -> rollAvg -> print
 
 
 main()
