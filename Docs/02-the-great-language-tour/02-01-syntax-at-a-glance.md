@@ -21,9 +21,33 @@ x := 5 # In-line
 - That starts with the indentation.
 - An indent is hard-coded[^4] as **exactly 4 spaces**: NOT TABS!
 
+## The Off-side Rule
+
+- Scope is entirely determined by the *level* of indentation, a.k.a., the off-side rule.
+
+```qrtz
+define function()
+    # inside the scope of the function
+# outside
+```
+
+- Let's go deeper.
+
+```qrtz
+define function()
+    # inside function scope
+
+    if cond
+        # inside if statement
+
+    # outside if but inside function
+
+# outside both
+```
+
 ## Example Program
 
-- Let's *actually* look at Quartz "syntax at a glance."
+- Now, let's *actually* look at Quartz "syntax at a glance."
 
 ```qrtz
 # Dice Roller + REPL
