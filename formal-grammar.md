@@ -49,10 +49,11 @@ program         = statement+
 statement       = simple_stmt | compound_stmt
 
 simple_stmt     = (assignment | expr | func_call | pipeline) NEWLINE | ";"
-declaration     = IDENT ":=" expr
+declaration     = IDENT ":=" (expr | func_call | pipeline)
 assignment      = IDENT ("="
                 | "+=" | "-=" | "*=" | "/=" |"**=" | "%="
-                | "&=" | "|=" | "~=" | "^=" | ">>=" | "<<=" ) expr
+                | "&=" | "|=" | "~=" | "^=" | ">>=" | "<<=" ) (expr
+                | func_call | pipeline)
 func_call       = IDENT "(" expr ")"
 pipeline        = IDENT (("->" IDENT IDENT?) | ("->" func_call))+
 
