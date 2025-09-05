@@ -67,12 +67,12 @@ assignment      = IDENT ("="
                 | "+=" | "-=" | "*=" | "/=" |"**=" | "%="
                 | "&=" | "|=" | "~=" | "^=" | ">>=" | "<<=" ) (expr
                 | func_call | pipeline)
-func_call       = IDENT "(" expr ")"
+func_call       = IDENT "(" expr (, expr)* ")"
 pipeline        = (IDENT | NUMBER | STRING | expr) (("->" IDENT IDENT?)
                 | ("->" func_call))+
 
 compound_stmt   = if_stmt | while_stmt | func_def
-if_stmt         = "if" expr suite {"else" "if" expr suite} ["else" suite]
+if_stmt         = "if" expr suite {"else" "if" expr suite} ("else" suite)?
 while_stmt      = ("while" | "until") expr suite
 func_def        = "define" IDENT "(" parameters? ")" suite
 
@@ -91,7 +91,7 @@ factor          = ("+" | "-" | "not") factor | primary
 primary         = NUMBER | STRING | IDENT | "(" expr ")"
 
 # ---- Lexical tokens ----
-IDENT           = / [a-zA-Z_](\w)* /
+IDENT           = / [a-zA-Z_] (\w)* /
 NUMBER          = / \d+ [\. \d+]? /
 STRING          = / "([^"\\] | \\.)*" | '([^'\\] | \\.)*' /
 NEWLINE         = / \n+ /
