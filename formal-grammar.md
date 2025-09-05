@@ -17,6 +17,7 @@
 | `\|` | "or" |
 | `+` | "one or more" |
 | `?` | "optional" (zero or one) |
+| `(...)` | Grouping |
 | `{...}` or `*` | "zero or more" (repetition) |
 | `"..."` | Literal characters / keywords |
 | `/.../` | Regular-expression notation (regex) |
@@ -31,6 +32,8 @@
 | `[...]` | Match *one* character from `...` |
 | `[a-z]` | Any lowercase letter |
 | `[^...]` | Any character *not* inside |
+| `(...)` | Grouping |
+| `+` | One or more |
 | `?` | Zero or one (optional) |
 | `*` | Zero or more (repetition) |
 | `\d` | Digit (0-9) |
