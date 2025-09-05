@@ -43,7 +43,17 @@
 | `\.` | Literal dot |
 | `.` | Any character (wildcard) |
 
-## Current Draft
+## Drafts
+
+### Current
+
+- As of now, there is not a functioning version of Quartz; therefore, nothing is here.
+
+```ebnf
+
+```
+
+### Goal
 
 ``` ebnf
 program         = statement+
