@@ -333,8 +333,14 @@ class Lexer:
             return
         if self.char == "=":
             self.token(Tag.PERIOD_PERIOD_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
         elif self.char == ".":
             self.token(Tag.PERIOD_PERIOD_PERIOD)
+            self.next()
+            if self.is_eof:
+                self.eof()
         else:
             self.token(Tag.PERIOD_PERIOD)
 
