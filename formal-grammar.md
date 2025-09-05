@@ -21,24 +21,24 @@
 | `"..."` | Literal characters / keywords |
 | `/.../` | Regular-expression notation (regex) |
 
-### Augmented Regex
+### Regex
 
 - Regex is used for defining lexicographical rules, a limitation of EBNF.
-- My augmented regex rules are defined below, `...` again denoting contents:
+- The rules for regex are defined below, `...` again denoting contents:
 
 | Symbol | Defintion |
 | - | - |
 | `[...]` | Match *one* character from `...` |
 | `[a-z]` | Any lowercase letter |
 | `[^...]` | Any character *not* inside |
+| `?` | Zero or one (optional) |
+| `*` | Zero or more (repetition) |
 | `\d` | Digit (0-9) |
 | `\w` | Alphanumeric + underscore `[a-zA-Z0-9_]` |
 | `\n` | Newline |
 | `\\` | Literal backslash |
 | `\.` | Literal dot |
-| `.` | Any character |
-
-- Any regex syntax not defined here borrows its definition from the augmented EBNF.
+| `.` | Any character (wildcard) |
 
 ## Current Draft
 
@@ -78,9 +78,9 @@ factor          = ("+" | "-" | "not") factor | primary
 primary         = NUMBER | STRING | IDENT | "(" expr ")"
 
 # ---- Lexical tokens ----
-IDENT           = / [a-zA-Z_]{\w} /
+IDENT           = / [a-zA-Z_](\w)* /
 NUMBER          = / \d+ [\. \d+]? /
-STRING          = / "{[^"\\] | \\.}" | '{[^'\\] | \\.}' /
+STRING          = / "([^"\\] | \\.)*" | '([^'\\] | \\.)*' /
 NEWLINE         = / \n+ /
 INDENT/DEDENT   = produced by lexer based on leading whitespace
 ```
