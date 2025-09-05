@@ -1,6 +1,6 @@
 # Quartz
 
-<img src="https://github.com/thatcosmicstorm/Quartz/blob/main/Quartz_Logo.png" alt="Quartz logo" width="25%" height="auto">
+![Quartz logo](https://github.com/thatcosmicstorm/Quartz/blob/main/Quartz_Logo.png)
 
 ## Introduction
 
@@ -10,20 +10,32 @@
 
 ## Code Snippets
 
-- Take the following Python code.
+<table>
+<tr>
+<th>Python</th>
+<th>Quartz</th>
+</tr>
+<tr>
+<td>
 
 ``` py
 string = " HELLO WORLD "
-print(" HELLO WORLD ".strip().lower())
+print(string.strip().lower())
 ```
-
-- In contrast, here's how you would, or should, write it in Quartz.
+  
+</td>
+<td>
 
 ``` qrtz
 string := " HELLO WORLD "
 string -> trim -> lower -> print
 ```
 
+</td>
+</tr>
+</table>
+
+- Both programs accomplish the same task.
 - Comparing the two, Quartz conveys a much more understandable flow of functions.
 
 ## Goals
