@@ -137,11 +137,6 @@ class Lexer:
     def eof(self):
         self.token(Tag.EOF)
 
-    def next_eof(self):
-        self.next()
-        if self.is_eof:
-            self.eof()
-
     def token(self, tag, tok=None):
         self.tokens.append(Token(tag, tok))
 
@@ -159,7 +154,9 @@ class Lexer:
             case "\n":
                 self.newline()
             case _ if self.char.isspace():
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
             case _ if self.char.isalpha() or self.char == "_":
                 self.identifier()
             case _ if self.char in DIGITS:
@@ -168,28 +165,44 @@ class Lexer:
                 self.string()
             case "(":
                 self.token(Tag.L_PAREN)
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
             case ")":
                 self.token(Tag.R_PAREN)
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
             case "[":
                 self.token(Tag.L_BRACKET)
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
             case "]":
                 self.token(Tag.R_BRACKET)
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
             case "{":
                 self.token(Tag.L_BRACE)
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
             case "}":
                 self.token(Tag.R_BRACE)
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
             case ";":
                 self.token(Tag.SEMICOLON)
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
             case ",":
                 self.token(Tag.COMMA)
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
             case "\\":
                 self.backslash()
             case ".":
