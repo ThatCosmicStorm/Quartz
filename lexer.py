@@ -236,7 +236,9 @@ class Lexer:
             case "#":
                 self.hashtag()
             case _:
-                self.next_eof()
+                self.next()
+                if self.is_eof:
+                    self.eof()
 
     ##########################
     # Case Functions
