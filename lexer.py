@@ -22,7 +22,6 @@ class Tag(Enum):
 
     INDENT = "    "
 
-    BACKSLASH = "\\"
     EQUAL = "="
     EQUAL_EQUAL = "=="
     EQUAL_ARROW = "=>"
@@ -194,8 +193,7 @@ class Lexer:
                 self.token(Tag.COMMA)
                 self.next_eof()
             case "\\":
-                self.token(Tag.BACKSLASH)
-                self.next_eof()
+                self.backslash()
             case ".":
                 self.period()
             case "=":
@@ -252,6 +250,18 @@ class Lexer:
             indents -= 1
         if self.is_eof:
             self.eof()
+
+    def backslash(self):
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char != "\n":
+            return
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
 
     def hashtag(self):
         while self.char != "\n":
