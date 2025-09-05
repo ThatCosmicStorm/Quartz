@@ -153,6 +153,8 @@ class Lexer:
     def lexer(self) -> list[Token]:
         while not self.is_eof:
             self.match_char()
+        while self.tokens[0].tag == Tag.NEWLINE:
+            self.tokens.pop(0)
         return self.tokens
 
     def match_char(self):
