@@ -41,6 +41,14 @@ string -> trim -> lower -> print
 - Pipe-based composition
   - The superior way of representing chained functions
 
+### Personal Constraints
+
+- *Zero LLM-written code*
+- *Zero external modules/libraries*
+  - I am, however, utilizing the standard library.
+- More about personal growth than it is about attaining peak efficiency.
+  - This should be pretty obvious, as Python is still my main language.
+
 ## Contributing to Quartz
 
 - Have any ideas/suggestions to improve Quartz?
