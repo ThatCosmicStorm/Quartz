@@ -145,6 +145,9 @@ class Lexer:
     ##########################
 
     def lexer(self) -> list[Token]:
+        if self.n == 0:
+            self.eof()
+            return self.tokens
         while not self.is_eof:
             self.match_char()
         return self.tokens
