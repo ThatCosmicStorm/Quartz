@@ -1,199 +1,338 @@
 """*The Quartz lexer.*
 """
 
+from dataclasses import dataclass
+from enum import Enum
+
 ##############################
 # TOKEN DEFINITIONS
 ##############################
 
 DIGITS = "0123456789"
 
+
+class Tag(Enum):
+    EOF = "EOF"
+    NEWLINE = "NEWLINE"
+    STRING = "STRING"
+    INTEGER = "INTEGER"
+    FLOAT = "FLOAT"
+    KEYWORD = "KEYWORD"
+    IDENTIFIER = "IDENTIFIER"
+
+    INDENT = "    "
+
+    BACKSLASH = "\\"
+    EQUAL = "="
+    EQUAL_EQUAL = "=="
+    EQUAL_ARROW = "=>"
+    L_PAREN = "("
+    R_PAREN = ")"
+    L_BRACKET = "["
+    R_BRACKET = "]"
+    L_BRACE = "{"
+    R_BRACE = "}"
+    PIPE = "|"
+    PIPE_EQUAL = "|="
+    SEMICOLON = ";"
+    COLON = ":"
+    COLON_EQUAL = ":="
+    PERIOD = "."
+    PERIOD_PERIOD = ".."
+    PERIOD_PERIOD_EQUAL = "..="
+    PERIOD_PERIOD_PERIOD = "..."
+    COMMA = ","
+    PERCENT = "%"
+    PERCENT_EQUAL = "%="
+    PERCENT_L_BRACE = "%{"
+    ASTERISK = "*"
+    ASTERISK_EQUAL = "*="
+    PLUS = "+"
+    PLUS_EQUAL = "+="
+    MINUS = "-"
+    MINUS_EQUAL = "-="
+    ARROW = "->"
+    L_ANGLE = "<"
+    L_ANGLE_EQUAL = "<="
+    L_ANGLE_L_ANGLE = "<<"
+    L_ANGLE_L_ANGLE_EQUAL = "<<="
+    R_ANGLE = ">"
+    R_ANGLE_EQUAL = ">="
+    R_ANGLE_R_ANGLE = ">>"
+    R_ANGLE_R_ANGLE_EQUAL = ">>="
+    CARET = "^"
+    CARET_EQUAL = "^="
+    TILDE = "~"
+    TILDE_EQUAL = "~="
+    TILDE_ARROW = "~>"
+    SLASH = "/"
+    SLASH_EQUAL = "/="
+    SLASH_SLASH = "//"
+    AMPERSAND = "&"
+    AMPERSAND_EQUAL = "&="
+
+
 KEYWORDS = {
-    "if": "KW_IF",
-    "else": "KW_ELSE",
-    "while": "KW_WHILE",
-    "until": "KW_UNTIL",
-    "define": "KW_DEFINE",
-    "return": "KW_RETURN",
-    "is": "KW_IS",
-    "in": "KW_IN",
-    "not": "KW_NOT",
-    "and": "KW_AND",
-    "or": "KW_OR",
-    "alias": "KW_ALIAS",
-    "str": "KW_STR",
-    "int": "KW_INT",
-    "float": "KW_FLOAT",
-    "list": "KW_LIST",
-    "hash": "KW_HASH",
-    "set": "KW_SET",
-    "bool": "KW_BOOL",
-    "True": "KW_TRUE",
-    "False": "KW_FALSE",
-    "None": "KW_NONE",
-    "assert": "KW_ASSERT",
-    "break": "KW_BREAK",
-    "continue": "KW_CONTINUE",
-    "pass": "KW_PASS",
-    "match": "KW_MATCH",
-    "case": "KW_CASE",
+    "if",
+    "else",
+    "while",
+    "until",
+    "define",
+    "return",
+    "is",
+    "in",
+    "not",
+    "and",
+    "or",
+    "alias",
+    "str",
+    "int",
+    "float",
+    "list",
+    "hash",
+    "set",
+    "bool",
+    "True",
+    "False",
+    "None",
+    "assert",
+    "break",
+    "continue",
+    "pass",
+    "match",
+    "case",
 }
 
-ESCAPE_LIST = {
-    "\\", '"', "'",
-    "a", "b", "f", "n", "r", "t", "v",
-    "o", "x", "u", "U"
-}
+
+@dataclass(slots=True, frozen=True)
+class Token:
+    tag: Tag | str
+    tok: str | None
+
 
 ##############################
 # LEXER
 ##############################
 
-class Lexer:
-    """*The functions behind the Quartz lexer.*
-    """
 
+class Lexer:
     def __init__(self, program: str):
         self.program: str = program + " "
-        self.token_dict: dict = {}
         self.index = 0 ; self.i = self.index
         self.length: int = len(self.program) ; self.n = self.length
         self.char: str = self.program[self.i]
-        self.eof = False
+        self.tokens: list[Token] = []
+        self.is_eof = False
 
     ##########################
     # Helper Functions
     ##########################
 
-    def check_eof(self):
-        if self.i < self.n:
-            self.eof = False
-        else:
-            self.eof = True
-
     def next(self):
         self.i += 1
-        self.check_eof()
-        if not self.eof:
+        if self.i != self.n:
             self.char = self.program[self.i]
         else:
-            self.char = ""
+            self.is_eof = True
 
-    def add_token(self, tok: str, start=None, end=None):
-        if self.eof:
-            return
+    def eof(self):
+        self.token(Tag.EOF)
 
-        if start is None and end is None:
-            loc = self.i
-        else:
-            loc = (start, end)
+    def next_eof(self):
+        self.next()
+        if self.is_eof:
+            self.eof()
 
-        self.token_dict[loc] = tok
+    def token(self, tag, tok=None):
+        self.tokens.append(Token(tag, tok))
 
     ##########################
     # Main Functions
     ##########################
 
-    def lexer(self) -> dict:
-        if self.n == 0:
-            self.eof = True
-            return self.token_dict
-
-        while (self.i < self.n) and not self.eof:
-            if self.char.isspace() and self.char != "\n":
-                self.next()
-                continue
+    def lexer(self) -> list[Token]:
+        while not self.is_eof:
             self.match_char()
-        return self.token_dict
+        return self.tokens
 
     def match_char(self):
         match self.char:
             case "\n":
                 self.newline()
-            case '"' | "'":
-                self.string()
+            case _ if self.char.isspace():
+                self.next_eof()
             case _ if self.char.isalpha() or self.char == "_":
                 self.identifier()
             case _ if self.char in DIGITS:
-                start = self.i
-                self.integer(start)
-            case "=":
-                self.equal()
+                self.integer()
+            case '"' | "'":
+                self.string()
             case "(":
-                self.add_token("L_PAREN")
-                self.next()
+                self.token(Tag.L_PAREN)
+                self.next_eof()
             case ")":
-                self.add_token("R_PAREN")
-                self.next()
+                self.token(Tag.R_PAREN)
+                self.next_eof()
             case "[":
-                self.add_token("L_BRACKET")
-                self.next()
+                self.token(Tag.L_BRACKET)
+                self.next_eof()
             case "]":
-                self.add_token("R_BRACKET")
-                self.next()
+                self.token(Tag.R_BRACKET)
+                self.next_eof()
             case "{":
-                self.add_token("L_BRACE")
-                self.next()
+                self.token(Tag.L_BRACE)
+                self.next_eof()
             case "}":
-                self.add_token("R_BRACE")
-                self.next()
-            case "|":
-                self.pipe_char()
+                self.token(Tag.R_BRACE)
+                self.next_eof()
             case ";":
-                self.add_token("SEMICOLON")
-                self.next()
-            case ":":
-                self.colon()
+                self.token(Tag.SEMICOLON)
+                self.next_eof()
+            case ",":
+                self.token(Tag.COMMA)
+                self.next_eof()
+            case "\\":
+                self.token(Tag.BACKSLASH)
+                self.next_eof()
             case ".":
                 self.period()
-            case ",":
-                self.add_token("COMMA")
-                self.next()
-            case "!":
-                self.bang()
+            case "=":
+                self.equal()
+            case "|":
+                self.pipe()
+            case ":":
+                self.colon()
             case "%":
                 self.percent()
             case "*":
                 self.asterisk()
             case "+":
                 self.plus()
+            case "-":
+                self.minus()
             case "<":
                 self.l_angle()
             case ">":
                 self.r_angle()
             case "^":
                 self.caret()
-            case "\\":
-                self.backslash()
             case "~":
                 self.tilde()
-            case "-":
-                self.minus()
             case "/":
                 self.slash()
             case "&":
                 self.ampersand()
             case "#":
-                while self.char != "\n":
-                    self.next()
+                self.hashtag()
             case _:
-                raise Exception("Lexer Error: No token associated")
+                self.next_eof()
 
     ##########################
     # Case Functions
     ##########################
 
     def newline(self):
-        self.add_token("NEWLINE")
+        self.token(Tag.NEWLINE)
         self.next()
-        spaces = 0
-        while True:
-            if self.char != " ":
-                return
-            spaces += 1
-            if spaces == 4:
-                self.add_token("INDENT")
-                spaces = 0
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char != " ":
+            return
+
+        spaces = 1
+        while not self.is_eof and self.char == " ":
             self.next()
+            spaces += 1
+        indents = spaces // 4
+        while indents > 0:
+            self.token(Tag.INDENT)
+            indents -= 1
+        if self.is_eof:
+            self.eof()
+
+    def hashtag(self):
+        while self.char != "\n":
+            self.next()
+            if self.is_eof:
+                self.eof()
+
+    def identifier(self):
+        start = self.i
+        while not self.is_eof and (self.char.isalnum() or self.char == "_"):
+            self.next()
+        ident = self.program[start : self.i]
+        if ident:
+            if ident in KEYWORDS:
+                self.token(Tag.KEYWORD, ident)
+            else:
+                self.token(Tag.IDENTIFIER, ident)
+        if self.is_eof:
+            self.eof()
+
+    def integer(self):
+        start = self.i
+        while not self.is_eof and self.char in DIGITS:
+            self.next()
+            if self.char == ".":
+                self.int_period(start, end=self.i)
+                return
+        number = self.program[start : self.i]
+        if number and self.char != ".":
+            self.token(Tag.INTEGER, number)
+        if self.is_eof:
+            self.eof()
+
+    def int_period(self, start=0, end=0):
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        integer = self.program[start : end]
+        if self.char == ".":
+            self.token(Tag.INTEGER, integer)
+            self.period_period()
+            return
+        while not self.is_eof and self.char in DIGITS:
+            self.next()
+        number = self.program[start : self.i]
+        self.token(Tag.FLOAT, number)
+        if self.is_eof:
+            self.eof()
+
+    def period(self):
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == ".":
+            self.period_period()
+            return
+        elif self.char in DIGITS:
+            self.period_int()
+            return
+        else:
+            self.token(Tag.PERIOD)
+        self.next()
+
+    def period_int(self):
+        start = self.i - 1
+        while not self.is_eof and self.char in DIGITS:
+            self.next()
+        number = self.program[start : self.i]
+        self.token(Tag.FLOAT, number)
+        if self.is_eof:
+            self.eof()
+
+    def period_period(self):
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == ".":
+            self.token(Tag.PERIOD_PERIOD_PERIOD)
+        else:
+            self.token(Tag.PERIOD_PERIOD)
 
     def string(self):
         if self.char == '"':
@@ -201,176 +340,241 @@ class Lexer:
         else:
             quote = "'"
         start = self.i
-        while True:
-            self.next()
-            if self.char == quote:
-                break
-            elif self.char == "\\":
-                self.backslash()
-        self.add_token("STRING", start=start, end=self.i-1)
-
-    def backslash(self):
-        start = self.i
         self.next()
-        if self.char not in ESCAPE_LIST:
+        if self.is_eof:
+            self.eof()
             return
-        else:
-            self.add_token("ESCAPE", start=start, end=self.i)
-
-    def identifier(self):
-        start = self.i
-        while self.char.isalnum() or self.char == "_":
+        while not self.is_eof and self.char != quote:
             self.next()
-        ident = self.program[start:self.i]
-        if ident in KEYWORDS:
-            self.add_token(KEYWORDS[ident], start=start, end=self.i-1)
-        else:
-            self.add_token("IDENT", start=start, end=self.i-1)
-
-    def integer(self, start: int):
-        self.next()
-        if self.char == ".":
-            self.int_period(start)
-        elif self.char in DIGITS or self.char == "_":
-            self.integer(start)
-        else:
-            self.add_token("INT", start=start, end=self.i)
-
-    def int_period(self, start: int):
-        self.next()
-        if self.char in DIGITS or self.char == "_":
-            self.float_num(start)
-        else:
-            self.i -= 1
-            self.add_token("INT", start=start, end=self.i)
-            self.period()
-
-    def float_num(self, start: int):
-        self.next()
-        if self.char in DIGITS or self.char == "_":
-            self.float_num(start)
-        else:
-            self.add_token("FLOAT", start=start, end=self.i)
-
-    def period(self):
-        self.next()
-        if self.char == ".":
-            self.period_period()
-        else:
-            self.add_token("PERIOD")
-
-    def period_period(self):
-        self.next()
-        if self.char == "=":
-            self.add_token("PERIOD_PERIOD_EQUAL")
-        elif self.char == ".":
-            self.add_token("PERIOD_PERIOD_PERIOD")
-        else:
-            self.add_token("PERIOD_PERIOD")
+        string = self.program[start : self.i + 1]
+        if self.program[start] == self.program[self.i]:
+            self.token(Tag.STRING, string)
+            self.next()
+            if self.is_eof:
+                self.eof()
+                return
+        if self.is_eof:
+            self.eof()
 
     ##########################
     # Template Functions
     ##########################
 
-    def template(
-        self, char: str, if_tok: str, else_tok: str,
-        deep_char="", deep_if_tok=""
-    ):
-        self.next()
-        if self.char != char:
-            self.add_token(else_tok)
-            return
-
-        if not deep_char:
-            self.add_token(if_tok)
-            self.next()
-        if deep_char:
-            self.template(
-                char=deep_char,
-                if_tok=deep_if_tok,
-                else_tok=else_tok
-            )
-
-    def equal_temp(self, char: str):
-        self.template("=", char + "_EQUAL", char)
-
-    ##########################
-
     def equal(self):
         self.next()
+        if self.is_eof:
+            self.eof()
+            return
         if self.char == "=":
-            self.add_token("EQUAL_EQUAL")
+            self.token(Tag.EQUAL_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
         elif self.char == ">":
-            self.add_token("EQUAL_ARROW")
+            self.token(Tag.EQUAL_ARROW)
+            self.next()
+            if self.is_eof:
+                self.eof()
         else:
-            self.add_token("EQUAL")
+            self.token(Tag.EQUAL)
 
-    def pipe_char(self):
-        self.equal_temp("PIPE")
+    def pipe(self):
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.PIPE_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        else:
+            self.token(Tag.PIPE)
 
     def colon(self):
-        self.template(
-            "=", "COLON_EQUAL", "COLON",
-            ">", "COLON_EQUAL_ARROW"
-        )
-
-    def bang(self):
         self.next()
+        if self.is_eof:
+            self.eof()
+            return
         if self.char == "=":
-            self.add_token("BANG_EQUAL")
-        else:
-            raise Exception("Lexer Error: No token associated")
+            self.token(Tag.COLON_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+            return
+        self.token(Tag.COLON)
 
     def percent(self):
         self.next()
+        if self.is_eof:
+            self.eof()
+            return
         if self.char == "=":
-            self.add_token("PERCENT_EQUAL")
+            self.token(Tag.PERCENT_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
         elif self.char == "{":
-            self.add_token("PERCENT_L_BRACE")
+            self.token(Tag.PERCENT_L_BRACE)
+            self.next()
+            if self.is_eof:
+                self.eof()
         else:
-            self.add_token("PERCENT")
+            self.token(Tag.PERCENT)
 
     def asterisk(self):
-        self.template(
-            "*", "ASTERISK_ASTERISK", "ASTERISK",
-            "=", "ASTERISK_ASTERISK_EQUAL"
-        )
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.ASTERISK_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        else:
+            self.token(Tag.ASTERISK)
 
     def plus(self):
-        self.equal_temp("PLUS")
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.PLUS_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        else:
+            self.token(Tag.PLUS)
+
+    def minus(self):
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.MINUS_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        else:
+            self.token(Tag.MINUS)
 
     def l_angle(self):
         self.next()
+        if self.is_eof:
+            self.eof()
+            return
         if self.char == "=":
-            self.add_token("L_ANGLE_EQUAL")
+            self.token(Tag.L_ANGLE_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
         elif self.char == "<":
-            self.equal_temp("L_ANGLE_L_ANGLE")
+            self.l_angle_l_angle()
+            return
+        self.token(Tag.L_ANGLE)
+
+    def l_angle_l_angle(self):
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.L_ANGLE_L_ANGLE_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
         else:
-            self.add_token("L_ANGLE")
+            self.token(Tag.L_ANGLE_L_ANGLE)
 
     def r_angle(self):
         self.next()
+        if self.is_eof:
+            self.eof()
+            return
         if self.char == "=":
-            self.add_token("R_ANGLE_EQUAL")
-        elif self.char == ">":
-            self.equal_temp("R_ANGLE_R_ANGLE")
+            self.token(Tag.R_ANGLE_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        elif self.char == "<":
+            self.r_angle_r_angle()
+            return
+        self.token(Tag.R_ANGLE)
+
+    def r_angle_r_angle(self):
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.R_ANGLE_R_ANGLE_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
         else:
-            self.add_token("R_ANGLE")
+            self.token(Tag.R_ANGLE_R_ANGLE)
 
     def caret(self):
-        self.equal_temp("CARET")
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.CARET_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        else:
+            self.token(Tag.CARET)
 
     def tilde(self):
         self.next()
+        if self.is_eof:
+            self.eof()
+            return
         if self.char == "=":
-            self.add_token("TILDE_EQUAL")
+            self.token(Tag.TILDE_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
         elif self.char == ">":
-            self.add_token("TILDE_R_ANGLE")
+            self.token(Tag.TILDE_ARROW)
+            self.next()
+            if self.is_eof:
+                self.eof()
         else:
-            self.add_token("TILDE")
+            self.token(Tag.TILDE)
 
     def slash(self):
-        self.equal_temp("SLASH")
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.SLASH_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        elif self.char == "/":
+            self.token(Tag.SLASH_SLASH)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        else:
+            self.token(Tag.SLASH)
 
     def ampersand(self):
-        self.equal_temp("AMPERSAND")
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.AMPERSAND_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        else:
+            self.token(Tag.AMPERSAND)
