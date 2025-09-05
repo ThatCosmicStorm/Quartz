@@ -49,6 +49,10 @@ string -> trim -> lower -> print
 - More about personal growth than it is about attaining peak efficiency.
   - This should be pretty obvious, as Python is still my main language.
 
+## Completed Features
+
+- [x] Lexer
+
 ## Contributing to Quartz
 
 - Have any ideas/suggestions to improve Quartz?
