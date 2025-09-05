@@ -458,6 +458,11 @@ class Lexer:
             self.next()
             if self.is_eof:
                 self.eof()
+        elif self.char == ">":
+            self.token(Tag.ARROW)
+            self.next()
+            if self.is_eof:
+                self.eof()
         else:
             self.token(Tag.MINUS)
 
