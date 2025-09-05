@@ -280,7 +280,7 @@ class Lexer:
             return
 
     def hashtag(self):
-        while self.char != "\n":
+        while not self.is_eof and self.char != "\n":
             self.next()
             if self.is_eof:
                 self.eof()
