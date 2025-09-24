@@ -47,12 +47,17 @@ KEYWORDS = {
 
 class Lexer:
     def __init__(self, program: str):
-        self.program: str = program + " "
+        self.program: str = self.clean_program(program)
         self.index = 0 ; self.i = self.index
         self.length: int = len(self.program) ; self.n = self.length
         self.char: str = self.program[self.i]
         self.tokens: list[Token] = []
         self.is_eof = False
+
+    def clean_program(self, program: str):
+        return "\n".join(
+            line for line in program.splitlines() if line.strip() != ""
+        )
 
     ##########################
     # Helper Functions
