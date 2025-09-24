@@ -64,8 +64,8 @@ statement       = simple_stmt | compound_stmt
 simple_stmt     = (assignment | expr | func_call | pipeline) NEWLINE | ";"
 declaration     = IDENT ":=" (expr | func_call | pipeline)
 assignment      = IDENT ("="
-                | "+=" | "-=" | "*=" | "/=" |"**=" | "%="
-                | "&=" | "|=" | "~=" | "^=" | ">>=" | "<<=" ) (expr
+                | "+=" | "-=" | "*=" | "/=" | "^=" | "%="
+                | "&=" | "|=" | "~=" | ">>=" | "<<=") (expr
                 | func_call | pipeline)
 func_call       = IDENT "(" expr (, expr)* ")"
 pipeline        = (IDENT | NUMBER | STRING | expr) (("->" IDENT IDENT?)
@@ -79,15 +79,15 @@ func_def        = "define" IDENT "(" parameters? ")" suite
 parameters      = IDENT {"," IDENT}
 
 # ---- Blocks ----
-suite           = simple_stmt | NEWLINE INDENT statement+ DEDENT
+suite           = NEWLINE INDENT statement+ DEDENT
 
 # ---- Expressions ----
 expr            = comparison {("and" | "or") comparison}
 comparison      = arith {("<" | ">" | "==" | "!=" | "<=" | ">="
-                | "is" | "is" "not" | in | "not" "in") arith}
+                | "is" | "is" "not" | "in" | "not" "in") arith}
 arith           = term {("+" | "-") term}
 term            = factor {("*" | "/" | "%") factor}
-factor          = ("+" | "-" | "not") factor | primary
+factor          = ("+" | "-" | "~" | "not")? (factor | primary)
 primary         = NUMBER | STRING | IDENT | "(" expr ")"
 
 # ---- Lexical tokens ----
