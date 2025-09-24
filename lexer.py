@@ -53,6 +53,7 @@ class Lexer:
         self.char: str = self.program[self.i]
         self.tokens: list[Token] = []
         self.is_eof = False
+        self.in_parens = 0
 
     def clean_program(self, program: str):
         return "\n".join(
@@ -104,31 +105,37 @@ class Lexer:
                 self.string()
             case "(":
                 self.token(Tag.L_PAREN)
+                self.in_parens += 1
                 self.next()
                 if self.is_eof:
                     self.eof()
             case ")":
                 self.token(Tag.R_PAREN)
+                self.in_parens -= 1
                 self.next()
                 if self.is_eof:
                     self.eof()
             case "[":
                 self.token(Tag.L_BRACKET)
+                self.in_parens += 1
                 self.next()
                 if self.is_eof:
                     self.eof()
             case "]":
                 self.token(Tag.R_BRACKET)
+                self.in_parens -= 1
                 self.next()
                 if self.is_eof:
                     self.eof()
             case "{":
                 self.token(Tag.L_BRACE)
+                self.in_parens += 1
                 self.next()
                 if self.is_eof:
                     self.eof()
             case "}":
                 self.token(Tag.R_BRACE)
+                self.in_parens -= 1
                 self.next()
                 if self.is_eof:
                     self.eof()
@@ -184,7 +191,7 @@ class Lexer:
     ##########################
 
     def newline(self):
-        if not self.tokens:
+        if self.in_parens:
             self.next()
             if self.is_eof:
                 self.eof()
