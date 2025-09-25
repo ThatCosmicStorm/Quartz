@@ -184,6 +184,8 @@ class Lexer:
                 self.slash()
             case "&":
                 self.ampersand()
+            case "!":
+                self.bang()
             case "#":
                 self.hashtag()
             case _:
@@ -581,3 +583,16 @@ class Lexer:
                 self.eof()
         else:
             self.token(Tag.AMPERSAND)
+
+    def bang(self):
+        self.next()
+        if self.is_eof:
+            self.eof()
+            return
+        if self.char == "=":
+            self.token(Tag.BANG_EQUAL)
+            self.next()
+            if self.is_eof:
+                self.eof()
+        else:
+            raise Exception("Unknown token")
