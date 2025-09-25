@@ -53,7 +53,9 @@ class Lexer:
         self.char: str = self.program[self.i]
         self.tokens: list[Token] = []
         self.is_eof = False
+        self.indent_stack = [0]
         self.in_parens = 0
+        self.line_start = 0
 
     def clean_program(self, program: str):
         return "\n".join(
@@ -201,17 +203,23 @@ class Lexer:
         if self.is_eof:
             self.eof()
             return
-        if self.char != " ":
-            return
+        self.indent()
 
-        spaces = 1
+    def indent(self):
+        spaces = 0
         while not self.is_eof and self.char == " ":
-            self.next()
             spaces += 1
+            self.next()
         indents = spaces // 4
-        while indents > 0:
+        if indents > self.indent_stack[-1]:
+            self.indent_stack.append(indents)
             self.token(Tag.INDENT)
-            indents -= 1
+        if indents < self.indent_stack[-1]:
+            while indents < self.indent_stack[-1]:
+                self.indent_stack.pop()
+                self.token(Tag.DEDENT)
+            if indents != self.indent_stack[-1]:
+                raise Exception("Inconsistent indentation.")
         if self.is_eof:
             self.eof()
 
