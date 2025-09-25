@@ -74,6 +74,9 @@ class Lexer:
             self.is_eof = True
 
     def eof(self):
+        while self.indent_stack != [0]:
+            self.indent_stack.pop()
+            self.token(Tag.DEDENT)
         self.token(Tag.EOF)
 
     def token(self, tag, tok=None):
