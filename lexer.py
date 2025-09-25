@@ -239,10 +239,13 @@ class Lexer:
             return
 
     def hashtag(self):
-        while not self.is_eof and self.char != "\n":
+        while self.char != "\n":
             self.next()
             if self.is_eof:
                 self.eof()
+                return
+        if self.char == "\n":
+            self.newline()
 
     def identifier(self):
         start = self.i
