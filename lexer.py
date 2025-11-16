@@ -490,7 +490,8 @@ class Lexer:
         elif self.char == "<":
             self.l_angle_l_angle()
             return
-        self.token(Tag.L_ANGLE)
+        else:
+            self.token(Tag.L_ANGLE)
 
     def l_angle_l_angle(self):
         self.next()
@@ -518,7 +519,8 @@ class Lexer:
         elif self.char == "<":
             self.r_angle_r_angle()
             return
-        self.token(Tag.R_ANGLE)
+        else:
+            self.token(Tag.R_ANGLE)
 
     def r_angle_r_angle(self):
         self.next()
