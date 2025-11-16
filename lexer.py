@@ -309,7 +309,8 @@ class Lexer:
                 self.eof()
                 return
         if self.char == "\n":
-            self.newline()
+            self.next()
+            self.indent()
 
     def identifier(self):
         start = self.i
