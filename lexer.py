@@ -600,10 +600,15 @@ class Lexer:
         if self.is_eof:
             self.eof()
             return
-        if self.char == "=":
-            self.token(Tag.BANG_EQUAL)
-            self.next()
-            if self.is_eof:
-                self.eof()
-        else:
-            raise Exception("Unknown token")
+        if self.char != "=":
+            raise LexerError(
+                self.ln,
+                self.col,
+                self.program_line,
+                """`!` is not an operator.
+            Did you mean `!=` or `not`?"""
+            )
+        self.token(Tag.BANG_EQUAL)
+        self.next()
+        if self.is_eof:
+            self.eof()
