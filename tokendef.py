@@ -74,4 +74,7 @@ class Tag(Enum):
 @dataclass(slots=True, frozen=True)
 class Token:
     tag: Tag | str
-    tok: str | None
+    tok: str | None = None
+    ln: int = 1
+    col: int = 1
+    line: str = ""
