@@ -245,7 +245,8 @@ class Lexer:
             if self.is_eof:
                 self.eof()
             return
-        self.token(Tag.NEWLINE)
+        if self.tokens[-1].tag != Tag.NEWLINE:
+            self.token(Tag.NEWLINE)
         self.next()
         if self.is_eof:
             self.eof()
