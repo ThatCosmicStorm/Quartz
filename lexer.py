@@ -259,7 +259,17 @@ class Lexer:
         while not self.is_eof and self.char == " ":
             spaces += 1
             self.next()
-        indents = spaces // 4
+        if spaces % 4 != 0:
+            raise LexerError(
+                self.ln,
+                self.col,
+                self.program_line,
+                """Inconsistent indentation.
+            Each indent level must be:
+              - FOUR characters long
+              - SPACES, not tabs"""
+            )
+        indents: int = int(spaces / 4)
         if indents > self.indent_stack[-1]:
             self.indent_stack.append(indents)
             self.token(Tag.INDENT)
