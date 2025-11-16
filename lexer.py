@@ -338,6 +338,11 @@ class Lexer:
         if ident:
             if ident in KEYWORDS:
                 self.token(Tag.KEYWORD, ident)
+            # f-strings in Python
+            elif ident == "f":
+                if self.char == '"' \
+                        or self.char == "'":
+                    self.string()
             else:
                 self.token(Tag.IDENTIFIER, ident)
         if self.is_eof:
@@ -414,7 +419,7 @@ class Lexer:
         else:
             self.token(Tag.PERIOD_PERIOD)
 
-    def string(self):
+    def string(self, f=False):
         if self.char == '"':
             quote: str = '"'
         else:
@@ -427,6 +432,8 @@ class Lexer:
         while not self.is_eof and self.char != quote:
             self.next()
         string: str = self.program[start : self.i + 1]
+        if f:
+            string = "f" + string
         if self.program[start] == self.program[self.i]:
             self.token(Tag.STRING, string)
             self.next()
