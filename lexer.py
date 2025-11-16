@@ -144,7 +144,8 @@ class Lexer:
                 self.next()
                 if self.is_eof:
                     self.eof()
-            case _ if self.char.isalpha() or self.char == "_":
+            case _ if self.char.isalpha() \
+                    or self.char == "_":
                 self.identifier()
             case _ if self.char in DIGITS:
                 self.integer()
