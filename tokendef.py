@@ -1,6 +1,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from textwrap import dedent
 
 
 ##############################
@@ -78,3 +79,24 @@ class Token:
     ln: int = 1
     col: int = 1
     line: str = ""
+
+
+class Error(Exception):
+    def __init__(
+        self,
+        ln: int,
+        col: int,
+        line: str,
+        message: str = ""
+    ):
+        pointer: str = " " * col
+        pointer = pointer[:-2] + "^"
+        super().__init__(dedent(
+            f"""\
+        Ln {ln}, col {col}
+
+        {line}
+        {pointer}
+
+        {message}\n"""
+        ))
