@@ -89,6 +89,14 @@ class Lexer:
 
     def next(self):
         self.i += 1
+        self.col += 1
+        if self.char == "\n":
+            if self.i != self.n:
+                self.program_line: str = next(
+                    self.program_lines
+                )
+            self.ln += 1
+            self.col = 1
         if self.i != self.n:
             self.char = self.program[self.i]
         else:
