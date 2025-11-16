@@ -77,6 +77,12 @@ class Lexer:
             self.program_lines
         )
 
+        self.line: int = 1
+        self.ln: int = self.line
+
+        self.column: int = 1
+        self.col: int = self.column
+
     ##########################
     # Helper Functions
     ##########################
