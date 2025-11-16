@@ -70,9 +70,13 @@ class Lexer:
         )
 
         self.index: int = 0
+        # Official alias
         self.i: int = self.index
+
         self.length: int = len(self.program)
+        # Official alias
         self.n: int = self.length
+
         if self.n != 0:
             self.char: str = self.program[self.i]
         self.tokens: list[Token] = []
@@ -82,9 +86,11 @@ class Lexer:
         self.line_start: int = 0
 
         self.line: int = 1
+        # Official alias
         self.ln: int = self.line
 
         self.column: int = 1
+        # Official alias
         self.col: int = self.column
 
     ##########################
