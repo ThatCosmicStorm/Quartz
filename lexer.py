@@ -61,7 +61,6 @@ class Lexer:
     def __init__(self, program: str):
         self.index = 0 ; self.i = self.index
         self.length: int = len(self.program) ; self.n = self.length
-        self.char: str = self.program[self.i]
         self.tokens: list[Token] = []
         self.is_eof = False
         self.indent_stack = [0]
@@ -77,6 +76,8 @@ class Lexer:
             self.program_lines
         )
 
+        if self.n != 0:
+            self.char: str = self.program[self.i]
         self.line: int = 1
         self.ln: int = self.line
 
