@@ -50,7 +50,6 @@ KEYWORDS = {
 
 class Lexer:
     def __init__(self, program: str):
-        self.program: str = self.clean_program(program)
         self.index = 0 ; self.i = self.index
         self.length: int = len(self.program) ; self.n = self.length
         self.char: str = self.program[self.i]
@@ -60,9 +59,13 @@ class Lexer:
         self.in_parens = 0
         self.line_start = 0
 
-    def clean_program(self, program: str):
-        return "\n".join(
-            line for line in program.splitlines() if line.strip() != ""
+        self.program: str = program
+
+        self.program_lines: Iterator = iter(
+            program.replace(" ", "·").splitlines()
+        )
+        self.program_line: str = next(
+            self.program_lines
         )
 
     ##########################
