@@ -2,14 +2,15 @@
 """
 
 from tokendef import Token, Tag
+from collections.abc import Iterator
 
 ##############################
 # SOME TOKEN DEFINITIONS
 ##############################
 
-DIGITS = "0123456789"
+DIGITS: str = "0123456789"
 
-KEYWORDS = {
+KEYWORDS: set[str] = {
     "if",
     "else",
     "while",
@@ -59,14 +60,6 @@ class LexerError(Error):
 
 class Lexer:
     def __init__(self, program: str):
-        self.index = 0 ; self.i = self.index
-        self.length: int = len(self.program) ; self.n = self.length
-        self.tokens: list[Token] = []
-        self.is_eof = False
-        self.indent_stack = [0]
-        self.in_parens = 0
-        self.line_start = 0
-
         self.program: str = program
 
         self.program_lines: Iterator = iter(
@@ -76,8 +69,18 @@ class Lexer:
             self.program_lines
         )
 
+        self.index: int = 0
+        self.i: int = self.index
+        self.length: int = len(self.program)
+        self.n: int = self.length
         if self.n != 0:
             self.char: str = self.program[self.i]
+        self.tokens: list[Token] = []
+        self.is_eof: bool = False
+        self.indent_stack: list[int] = [0]
+        self.in_parens: int = 0
+        self.line_start: int = 0
+
         self.line: int = 1
         self.ln: int = self.line
 
@@ -256,7 +259,7 @@ class Lexer:
             self.indent()
 
     def indent(self):
-        spaces = 0
+        spaces: int = 0
         while not self.is_eof and self.char == " ":
             spaces += 1
             self.next()
@@ -314,14 +317,14 @@ class Lexer:
             self.indent()
 
     def identifier(self):
-        start = self.i
+        start: int = self.i
         while not self.is_eof \
                 and (self.char.isalnum()
                         or self.char == "_"):
             self.next()
         if self.char == "?":
             self.next()
-        ident = self.program[start : self.i]
+        ident: str = self.program[start : self.i]
         if ident:
             if ident in KEYWORDS:
                 self.token(Tag.KEYWORD, ident)
@@ -331,13 +334,13 @@ class Lexer:
             self.eof()
 
     def integer(self):
-        start = self.i
+        start: int = self.i
         while not self.is_eof and self.char in DIGITS:
             self.next()
             if self.char == ".":
                 self.int_period(start, end=self.i)
                 return
-        number = self.program[start : self.i]
+        number: str = self.program[start : self.i]
         if number and self.char != ".":
             self.token(Tag.INTEGER, number)
         if self.is_eof:
@@ -348,14 +351,14 @@ class Lexer:
         if self.is_eof:
             self.eof()
             return
-        integer = self.program[start : end]
+        integer: str = self.program[start : end]
         if self.char == ".":
             self.token(Tag.INTEGER, integer)
             self.period_period()
             return
         while not self.is_eof and self.char in DIGITS:
             self.next()
-        number = self.program[start : self.i]
+        number: str = self.program[start : self.i]
         self.token(Tag.FLOAT, number)
         if self.is_eof:
             self.eof()
@@ -376,10 +379,10 @@ class Lexer:
         self.next()
 
     def period_int(self):
-        start = self.i - 1
+        start: int = self.i - 1
         while not self.is_eof and self.char in DIGITS:
             self.next()
-        number = self.program[start : self.i]
+        number: str = self.program[start : self.i]
         self.token(Tag.FLOAT, number)
         if self.is_eof:
             self.eof()
@@ -404,17 +407,17 @@ class Lexer:
 
     def string(self):
         if self.char == '"':
-            quote = '"'
+            quote: str = '"'
         else:
-            quote = "'"
-        start = self.i
+            quote: str = "'"
+        start: int = self.i
         self.next()
         if self.is_eof:
             self.eof()
             return
         while not self.is_eof and self.char != quote:
             self.next()
-        string = self.program[start : self.i + 1]
+        string: str = self.program[start : self.i + 1]
         if self.program[start] == self.program[self.i]:
             self.token(Tag.STRING, string)
             self.next()
