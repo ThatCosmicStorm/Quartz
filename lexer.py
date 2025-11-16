@@ -1,8 +1,8 @@
 """*The Quartz lexer.*
 """
 
-from tokendef import Token, Tag
 from collections.abc import Iterator
+from tokendef import Token, Tag, Error
 
 ##############################
 # SOME TOKEN DEFINITIONS
