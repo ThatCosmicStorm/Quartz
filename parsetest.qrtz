@@ -1,0 +1,40 @@
+
+import numpy as np
+
+
+define factorial(n) ~> int
+    if n <= 1
+        return 1
+    else
+        return n * factorial(n - 1)
+
+
+define main()
+    # demo pipelines and python-style dotted names
+    rng := numpy.random.default_rng()
+    rolls: int := 0
+    total: int := 0
+    while rolls < 3
+        rng.integers(1, 7) -> str -> print
+        total += val
+        rolls += 1
+
+    print(f"Total: {total}")
+
+
+define fib(n: int)
+    a: int := 0
+    b: int := 1
+    for i in 0..n
+        a -> str -> print
+        a = b
+        b = a + b
+
+
+define prime?(x: int) ~> bool
+    if x < 2
+        return False
+    for i in 2..x
+        if x % i == 0
+            return False
+    return True
