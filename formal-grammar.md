@@ -117,7 +117,7 @@ call_parameter
 call_params
     call_parameter {"," call_parameter}
 pipe_stage
-    (IDENT expr) | ("."? func_call) | (method_call)
+    (IDENT {expr}) | ("."? func_call) | (method_call)
 import_parameter
     IDENT ("as" IDENT)?
 import_params
