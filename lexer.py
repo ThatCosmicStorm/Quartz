@@ -83,7 +83,15 @@ class Lexer:
         self.token(Tag.EOF)
 
     def token(self, tag, tok=None):
-        self.tokens.append(Token(tag, tok))
+        self.tokens.append(
+            Token(
+                tag,
+                tok,
+                self.ln,
+                self.col,
+                self.program_line
+            )
+        )
 
     ##########################
     # Main Functions
