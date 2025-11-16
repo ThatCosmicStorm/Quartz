@@ -251,7 +251,8 @@ class Lexer:
         if self.is_eof:
             self.eof()
             return
-        self.indent()
+        if self.char != "\n":
+            self.indent()
 
     def indent(self):
         spaces = 0
