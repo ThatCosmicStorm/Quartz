@@ -314,7 +314,6 @@ class Lexer:
 
     def identifier(self):
         start = self.i
-        while not self.is_eof and (self.char.isalnum() or self.char == "_"):
         while not self.is_eof \
                 and (self.char.isalnum()
                         or self.char == "_"):
