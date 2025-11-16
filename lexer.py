@@ -268,7 +268,15 @@ class Lexer:
                 self.indent_stack.pop()
                 self.token(Tag.DEDENT)
             if indents != self.indent_stack[-1]:
-                raise Exception("Inconsistent indentation.")
+                raise LexerError(
+                    self.ln,
+                    self.col,
+                    self.program_line,
+                    """Inconsistent indentation.
+                Each indent level must be:
+                  - FOUR characters long
+                  - SPACES, not tabs"""
+                )
         if self.is_eof:
             self.eof()
 
