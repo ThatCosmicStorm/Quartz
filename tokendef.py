@@ -49,6 +49,7 @@ class Tag(Enum):
     MINUS = "-"
     MINUS_EQUAL = "-="
     ARROW = "->"
+    ARROW_EQUAL = "->="
     L_ANGLE = "<"
     L_ANGLE_EQUAL = "<="
     L_ANGLE_L_ANGLE = "<<"
