@@ -127,6 +127,10 @@ class Lexer:
         if self.n == 0:
             self.eof()
             return self.tokens
+        while self.char == "\n":
+            self.next()
+            if self.is_eof:
+                self.eof()
         while not self.is_eof:
             self.match_char()
         return self.tokens
