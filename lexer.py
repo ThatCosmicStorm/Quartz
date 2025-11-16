@@ -376,7 +376,6 @@ class Lexer:
             return
         else:
             self.token(Tag.PERIOD)
-        self.next()
 
     def period_int(self):
         start: int = self.i - 1
