@@ -1,5 +1,4 @@
 
-from pprint import pprint
 from tokendef import Tag, Token, Error
 from nodes import *
 
