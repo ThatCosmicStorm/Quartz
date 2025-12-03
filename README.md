@@ -18,7 +18,7 @@
 <tr>
 <td>
 
-``` py
+```py
 string = " HELLO WORLD "
 print(string.strip().lower())
 ```
@@ -26,9 +26,9 @@ print(string.strip().lower())
 </td>
 <td>
 
-``` qrtz
+```qrtz
 string := " HELLO WORLD "
-string -> trim -> lower -> print
+string -> .strip -> .lower -> print
 ```
 
 </td>
@@ -38,40 +38,50 @@ string -> trim -> lower -> print
 - Both programs accomplish the same task.
 - Comparing the two, Quartz conveys a much more understandable flow of functions.
 
-## Goals
+## Current Design (compared w/ basic Python)
 
-### Main
-
-- **Create a functioning, turing-complete version**
-
-### Design
-
-- Simplistic look and feel, akin to Python
-  - No need for braces and semicolons to flood the program
-- Embraces the off-side rule
-  - No unnecessary colons or "end" keywords
-- Pipe-based composition
-  - The superior way of representing chained functions
-
-### Personal Constraints
-
-- *Zero LLM-written code*
-- *Zero external modules/libraries*
-  - I am, however, utilizing the standard library.
-- More about personal growth than it is about attaining peak efficiency.
-  - This should be pretty obvious, as Python is still my main language.
+- Embraces the offside rule
+  - Neither colons nor one-liners
+- Pipeline operator `->`
+  - Function return type arrow is `~>`
+- `define`, not `def`
+- `else if`, not `elif`
+- `hash`, not `dict`
+- `^`, not `**` (exponentiation)
+  - `~`, not `^` (binary XOR)
+  - `~` is also still binary NOT
+- `%{}`, not `{}`, for `set` and `hash`
+- `while` AND `until` loops
+- Initialization (`:=`) is different from (re)assignment (`=`)
+- Cloning implicit, aliasing explicit
+  - Aliasing can be done at initialization
+    - `index as i := 0`
+  - Or as a standalone statement
+    - `alias i := index`
+- Range operators `..` (exclusive) and `..=` (inclusive), not `range()`
+- `for` loops can look like `for 0..5` instead of `for _ in range(0, 5)`
+  - A variable can still be used like `for i in 0..5`
+- `construct` is used to create an instance of an object from a class
+  - This plants the seed for a more extreme concept in the future
+  - `construct MyObject as mb`, not `mb = MyObject()`
+  - No alias is required (`construct MyObject`)
+    - You can directly call methods like `MyObject.method()`
 
 ## Completed Features
 
 - [x] Lexer
+- [x] Parser
+- [ ] Implementation
 
 ## Contributing to Quartz
 
 - Have any ideas/suggestions to improve Quartz?
+- Is everything breaking when you run your program?
 - Open an issue on GitHub!
 
 ## WORK IN PROGRESS
 
-- For now, Quartz is largely theoretical, so you can't play around with it *yet*.
-- Keep in mind, at this stage, everything is subject to change.
-- To read the Quartz documentation, go to the Docs folder.
+- For now, Quartz is mainly theoretical, so you can't play around with it *yet*.
+  - *Everything is subject to change.*
+- Quartz **docs are unfinished and quite outdated** for the moment.
+  - After a working implementation is established, this is my next focus.
