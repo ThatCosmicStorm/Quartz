@@ -1,155 +1,145 @@
-# (Almost) Context-free Grammar
+# Formal Grammar
 
-## Definitions
-
-### Grammatical Rules
-
-- The grammatical syntax for Quartz is defined below
-  - `...` denotes contents
+## Grammar Syntax
 
 | Symbol | Definition |
 | - | - |
-| INDENT | "is defined as" |
+| INDENT | Contents |
 | `#` | Comment (no meaning) |
-| `\|` | "or" |
-| `+` | "one or more" |
-| `?` | "optional" (zero or one) |
+| `\|` | Or |
+| `+` | One or more |
 | `(...)` | Grouping |
-| `{...}` | "zero or more" (repetition) |
-| `"..."` | Literal characters / keywords |
+| `[...]` | Zero or one |
+| `{...}` | Zero or more |
+| `"..."` | Literal characters |
 | `/.../` | Regex |
 
-### Regex
-
-- Some of the rules for regex are defined below
-  - `...` denotes contents
-  - May not be entirely accurate
-
-| Symbol | Defintion |
-| - | - |
-| `[...]` | Match *one* character from `...` |
-| `[a-z]` | Any lowercase letter |
-| `[^...]` | Any character *not* inside `...` |
-| `(...)` | Grouping |
-| `+` | One or more |
-| `?` | Zero or one (optional) |
-| `*` | Zero or more (repetition) |
-| `\d` | Digit (0-9) |
-| `\w` | Alphanumeric + underscore `[a-zA-Z0-9_]` |
-| `\n` | Newline |
-| `\\` | Literal backslash |
-| `\.` | Literal dot |
-| `.` | Any character (wildcard) |
-
-## Notes
-
-- The formal grammar laid out below is, in fact, not entirely context-free.
-  - The INDENT/DEDENT tokens depend on contextual information of the prior indent level.
-
 ## Grammar
+
+### [Off-side](https://en.wikipedia.org/wiki/Off-side_rule) mode (DEFAULT)
 
 ```gram
 
 program
-    statement+
+    {statement}
 
 # ---- Statements ----
 statement
-    simple_stmt | compound_stmt
+    ((expr | simple) stmt_end)
+    | compound
 
-simple_stmt
-    (initialization | alias
-                    | construct
-                    | assignment
-                    | func_call
-                    | method_call
-                    | pipeline
-                    | import
-                    | return) stmt_end
+simple
+    alias
+    | assert
+    | assignment
+    | basic_import
+    | channeled_assignment
+    | initialization
+    | raise
+    | return
+    | selective_import
+    | type_alias
+    | yield
 
-compound_stmt
-    if_stmt | while_stmt | for_stmt | func_def
+compound
+    class
+    | for
+    | function_definition
+    | if
+    | match
+    | while
+    | wrap
 
 # ---- Simple Cases ----
-
-initialization
-    "imm"? IDENT ("as" IDENT)? (":" TYPE)? ":=" expr_pipe
 alias
-    "alias" IDENT ":=" IDENT
-construct
-    "construct" IDENT ("as" IDENT)?
+    "alias" IDENT "=" IDENT
+assert
+    "assert" expr ["," STRING]
 assignment
-    IDENT ((ASSIGNMENT_OP expr_pipe) | pipe_assign)
-func_call
-    IDENT "(" call_params? ")"
-method_call
-    (IDENT ".")+ func_call
-pipeline
-    expr ("->" pipe_stage)+
-import
-    basic_import | selective_import
+    IDENT ((ASSIGNMENT_OP expr) | pipe_assign)
 basic_import
-    "import" IDENT ("as" IDENT)?
+    "import" IDENT ["as" IDENT]
+initialization
+    IDENT ["as" IDENT] ((":" TYPE "=") | ":=") expr
+raise
+    "raise" [expr]
+return
+    ("return" | "<<<") [expr | ("if" expr)]
 selective_import
     "from" IDENT "import" ("*" | import_params)
-return
-    "return" expr
+type_alias
+    "type" IDENT "=" TYPE
+yield
+    "yield" expr
 
 # ---- Compound Cases ----
-
-if_stmt
-    "if" expr_pipe suite {"else" "if" expr_pipe suite} ("else" suite)?
-while_stmt
-    ("while" | "until") expr_pipe suite
-for_stmt
-    "for" ((IDENT "in" range) | range) suite
-func_def
-    "define" IDENT "(" def_params? ")" suite
+class
+    ["pub"] "class" IDENT ["(" IDENT {"," IDENT} [","] ")"] suite
+for
+    "for" [expr "in"] expr suite
+function_definition
+    ["pub"] "fn" IDENT "(" [def_params] ")" [def_return] suite
+if
+    "if" expr suite {"else" "if" expr suite} ["else" suite]
+match
+    "match" expr match_suite
+main
+    "main" suite
+while
+    ("while" | "until") expr suite
+wrap
+    "wrap" target {"," target} NEWLINE function_definition
 
 # ---- Statement Parts ----
-
-stmt_end
-    NEWLINE | ;
-pipe_assign
-    "->=" (pipe_stage)+
 call_parameter
-    expr_pipe | (IDENT ("=" expr_pipe)?)
+    expr
+    | (IDENT ["=" expr])
 call_params
-    call_parameter {"," call_parameter}
-pipe_stage
-    (IDENT {expr}) | ("."? func_call) | (method_call)
+    call_parameter {"," call_parameter} [","]
+def_parameter
+    IDENT [":" TYPE] ["=" expr]
+def_params
+    def_parameter {"," def_parameter} [","]
+def_return
+    "~>" TYPE ["{" expr "}"]
 import_parameter
-    IDENT ("as" IDENT)?
+    IDENT ["as" IDENT]
 import_params
     import_parameter {"," import_parameter}
-range
-    (IDENT | int) (".." | "..=") (IDENT | int)
-def_parameter
-    IDENT (":" TYPE)? ("=" expr_pipe)?
-def_params
-    def_parameter {"," def_parameter}
+pipe_assign
+    "->=" pipe_stage {"->" pipe_stage}
+pipe_attribute
+    ["."] {IDENT "."} IDENT
+pipe_stage
+    pipe_attribute [("(" [call_params] ")") | (":" expr {"," expr})]
+stmt_end
+    NEWLINE
+target
+    IDENT ["(" call_params ")"]
 
 # ---- Blocks ----
 suite
     NEWLINE INDENT statement+ DEDENT
+match_suite
+    NEWLINE INDENT ("case" expr suite)+ DEDENT
 
 # ---- Expressions ----
-
-expr_pipe
-    expr | pipeline
-
-# `expr` could be expanded later.
-# That's why it just
-# jumps straight to `disjunction`.
 expr
-    disjunction
+    ternary {"->" pipe_stage}
 
+ternary
+    disjunction ["??" expr "!!" expr]
 disjunction
-    conjunction {"or" conjuction}
+    conjunction {"or" conjunction}
 conjunction
     inversion {"and" inversion}
 inversion
-    ("not" inversion) | comparison
+    range
+    | ("not" inversion)
+
+range
+    comparison
+    | ([expr] (".." | "..=") expr [".." expr])
 
 comparison
     bitwise_or {COMPARISON_OP bitwise_or}
@@ -166,39 +156,112 @@ sum
 term
     factor {("*" | "/" | "//" | "%") factor}
 factor
-    (("+" | "-" | "~")? factor) | power
+    power | (["+" | "-" | "~"] factor)
 power
-    primary {"^" factor}
+    postfix {"^" factor}
+postfix
+    primary {postfix_op}
+postfix_op
+    ("." IDENT)
+    | ("(" [call_params] ")")
+    | ("[" subscript_list "]")
+subscript_list
+    subscript {"," subscript} [","]
+subscript
+    slice | expr
+slice
+    [disjunction] ":" [expr] [":" [expr]]
 primary
-    NUMBER | STRING
-           | IDENT
-           | "(" expr_pipe ")"
-           | func_call
-           | method_call
+    BOOLEAN | DICT
+            | DICT_COMPREHENSION
+            | DOCSTRING
+            | FLOAT
+            | GENERATOR_COMPREHENSION
+            | IDENT
+            | INTEGER
+            | LIST
+            | LIST_COMPREHENSION
+            | SET
+            | SET_COMPREHENSION
+            | STRING
+            | TUPLE
+            | "(" expr ")"
 
-# ---- Lexical tokens (regex) ----
-IDENT
-    /[a-zA-Z_]\w*\??/
-NUMBER
-    /\d+(\.\d+)?/
-STRING
-    /("(\\.|[^"\\])*")|('(\\.|[^'\\])')/
-NEWLINE
-    /\n+/
-
-# ---- Shorthand tokens ----
+# ---- Other Tokens ----
 TYPE
-    "int" | "float" | "str" | "bool" | "None"
-          | (("list" | "set" | "hash") ("[" TYPE {"," TYPE} "]")?)
+    INNER_TYPE {"|" INNER_TYPE}
+INNER_TYPE
+    IDENT ["[" [MORE_TYPE] "]"]
+MORE_TYPE
+    OR_TYPE {"," OR_TYPE} [","]
+OR_TYPE
+    TYPE {"|" TYPE}
+
+TUPLE
+    "(" [COLLECTION_ITEMS | (expr ",")] ")"
+LIST
+    "[" [COLLECTION_ITEMS] "]"
+SET
+    "${" [COLLECTION_ITEMS] "}"
+DICT
+    "%{" [DICT_ITEMS] "}"
+COLLECTION_ITEMS
+    expr {"," expr} [","]
+DICT_ITEMS
+    expr ":" expr {"," expr ":" expr} [","]
+
+GENERATOR_COMPREHENSION
+    "(" COMPREHENSION ")"
+LIST_COMPREHENSION
+    "[" COMPREHENSION "]"
+SET_COMPREHENSION
+    "${" COMPREHENSION "}"
+DICT_COMPREHENSION
+    "%{" DICT_COMP "}"
+COMPREHENSION
+    expr ("for" expr "in" expr)+ {"if" expr}
+DICT_COMP
+    expr ":" expr ("for" expr "in" expr)+ {"if" expr}
 
 # Excludes "pipe assign" operator `->=`
 ASSIGNMENT_OP
-    "=" | "+=" | "-=" | "*="
-        | "/=" | "^=" | "%=" | "&="
-        | "|=" | "~=" | ">>=" | "<<="
+    "="
+    | "+="
+    | "-="
+    | "*="
+    | "/="
+    | "^="
+    | "%="
+    | "&="
+    | "|="
+    | "~="
+    | ">>="
+    | "<<="
 COMPARISON_OP
-    "<" | ">" | "==" | "!=" | "<=" | ">="
-        | "is" | "is not" | "in" | "not in"
+    "<"
+    | ">"
+    | "=="
+    | "!="
+    | "<="
+    | ">="
+    | "is"
+    | ("is" "not")
+    | "in"
+    | ("not" "in")
+
+# ---- Lexical tokens (regex) ----
+IDENT
+    /([a-zA-Z_@]\w*\??)|($$)/
+INTEGER
+    /\d+/
+FLOAT
+    /(\d+\.\d*|\.\d+)/
+STRING
+    /f?(("(\\.|[^"\\])*")|('(\\.|[^'\\])'))/
+DOCSTRING
+    /f?"""(\\.|[^"\\])*"""/
+NEWLINE
+    /\n+/
 
 # ---- Non-context-free tokens ----
 INDENT/DEDENT

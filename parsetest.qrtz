@@ -28,7 +28,7 @@ define fib(n: int)
     for i in 0..n
         a -> str -> print
         a = b
-        b = a + b
+        b ->= .add a
 
 
 define prime?(x: int) ~> bool
