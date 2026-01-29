@@ -1,3 +1,0 @@
-# Pipelines
-
-## WORK IN PROGRESS

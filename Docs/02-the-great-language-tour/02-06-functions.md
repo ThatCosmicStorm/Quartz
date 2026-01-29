@@ -1,3 +1,0 @@
-# Functions
-
-## WORK IN PROGRESS
