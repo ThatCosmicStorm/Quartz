@@ -70,7 +70,7 @@ import
 pass
     "pass"
 raise
-    "raise" [expr]
+    "raise" [expr ["from" expr]]
 regular_assign
     expr "=" expr
 return
