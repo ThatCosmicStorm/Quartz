@@ -27,26 +27,27 @@ statement
     | compound
 
 simple
-    alias
-    | assert
-    | assignment
-    | basic_import
-    | channeled_assignment
-    | initialization
+    assert
+    | assign
+    | break
+    | continue
+    | delete
+    | import
+    | pass
     | raise
     | return
-    | selective_import
     | type_alias
     | yield
 
 compound
     class
+    | decorator
     | for
     | function_definition
     | if
     | match
+    | struct
     | while
-    | wrap
 
 # ---- Simple Cases ----
 annotated_assign
