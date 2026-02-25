@@ -83,6 +83,8 @@ if
     "if" expr suite {"else" "if" expr suite} ["else" suite]
 match
     "match" expr match_suite
+struct
+    ["pub"] "struct" IDENT class_suite
 while
     ("while" | "until") expr suite
 
