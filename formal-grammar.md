@@ -56,15 +56,15 @@ assert
 assignment
     IDENT ((ASSIGNMENT_OP expr) | pipe_assign)
 basic_import
-    "import" IDENT ["as" IDENT]
 initialization
     IDENT ["as" IDENT] ((":" TYPE "=") | ":=") expr
+    "import" expr ["as" IDENT] {"," expr ["as" IDENT]}
 raise
     "raise" [expr]
 return
     [expr] "<<<" ["if" expr ["else" expr]]
 selective_import
-    "from" IDENT "import" ("*" | import_params)
+    "from" expr "import" ("*" | import_params)
 type_alias
     "type" IDENT "=" TYPE
 yield
