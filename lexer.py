@@ -248,9 +248,7 @@ def main() -> list[Token]:
         "!": _bang,
         "^": _caret,
         ":": _colon,
-        "$": _dollar,
         "=": _equal,
-        "?": _eroteme,
         "#": _hashtag,
         "<": _l_angle,
         ",": _match_comma,
@@ -659,23 +657,10 @@ def _bang() -> None:
     if _next_eof():
         return
     if _check_next("=", Tag.BANG_EQUAL):
-        return
-    if not _check_next("!", Tag.BANG_BANG):
         _raise_error(
             """\
             `!` is not an operator.
-            Did you mean `!=`, `!!`, or `not`?""",
-        )
-
-
-def _eroteme() -> None:
-    if _next_eof():
-        return
-    if not _check_next("?", Tag.EROTEME_EROTEME):
-        _raise_error(
-            """\
-            `?` is not an operator.
-            Did you mean `??`?""",
+            Did you mean `!=` or `not`?""",
         )
 
 
