@@ -126,7 +126,7 @@ expr
     ternary {"->" pipe_stage}
 
 ternary
-    disjunction ["??" expr "!!" expr]
+    disjunction ["if" expr "else" expr]
 disjunction
     conjunction {"or" conjunction}
 conjunction
