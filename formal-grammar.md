@@ -132,12 +132,7 @@ disjunction
 conjunction
     inversion {"and" inversion}
 inversion
-    range
-    | ("not" inversion)
-
-range
-    comparison
-    | ([expr] (".." | "..=") expr [".." expr])
+    "not" inversion
 
 comparison
     bitwise_or {COMPARISON_OP bitwise_or}
