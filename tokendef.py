@@ -25,7 +25,7 @@ class Tag(Enum):
     ARROW_EQUAL = "->="
     ASTERISK = "*"
     ASTERISK_EQUAL = "*="
-    BANG_BANG = "!!"
+    AT_SIGN = "@"
     BANG_EQUAL = "!="
     CARET = "^"
     CARET_EQUAL = "^="
@@ -39,7 +39,6 @@ class Tag(Enum):
     EQUAL = "="
     EQUAL_ARROW = "=>"
     EQUAL_EQUAL = "=="
-    EROTEME_EROTEME = "??"
     FLOAT = "FLOAT"
     IDENT = "IDENTIFIER"
     INDENT = "INDENT"
@@ -128,6 +127,7 @@ class Error(Exception):
                 {dedent(message)}\n""",
             ),
         )
+
 
 ##############################
 # END OF FILE
