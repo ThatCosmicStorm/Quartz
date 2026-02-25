@@ -62,7 +62,7 @@ initialization
 raise
     "raise" [expr]
 return
-    ("return" | "<<<") [expr | ("if" expr)]
+    [expr] "<<<" ["if" expr ["else" expr]]
 selective_import
     "from" IDENT "import" ("*" | import_params)
 type_alias
