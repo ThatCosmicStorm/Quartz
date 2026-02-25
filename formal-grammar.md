@@ -49,18 +49,30 @@ compound
     | wrap
 
 # ---- Simple Cases ----
-alias
-    "alias" IDENT "=" IDENT
+annotated_assign
+    expr ":" TYPE ["=" expr]
 assert
     "assert" expr ["," STRING]
-assignment
-    IDENT ((ASSIGNMENT_OP expr) | pipe_assign)
+assign
+    annotated_assign | augmented_assign | regular_assign
+augmented_assign
+    expr ((ASSIGNMENT_OP expr) | pipe_assign)
 basic_import
-initialization
-    IDENT ["as" IDENT] ((":" TYPE "=") | ":=") expr
     "import" expr ["as" IDENT] {"," expr ["as" IDENT]}
+break
+    "break"
+continue
+    "continue"
+delete
+    "del" expr
+import
+    basic_import | selective_import
+pass
+    "pass"
 raise
     "raise" [expr]
+regular_assign
+    expr "=" expr
 return
     [expr] "<<<" ["if" expr ["else" expr]]
 selective_import
