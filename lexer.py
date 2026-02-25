@@ -244,6 +244,7 @@ def main() -> list[Token]:
     _self.match_symbols: dict[str, Callable[[], None]] = {
         "&": _ampersand,
         "*": _asterisk,
+        "@": _match_at_sign,
         "\\": _backslash,
         "!": _bang,
         "^": _caret,
@@ -284,7 +285,7 @@ def _match_char() -> None:
         _newline()
     elif _self.char.isspace():
         _next_eof()
-    elif _self.char.isalpha() or _check("_") or _check("@"):
+    elif _self.char.isalpha() or _check("_"):
         _ident()
     elif _in(DIGITS):
         _integer()
@@ -337,6 +338,11 @@ def _match_semicolon() -> None:
 
 def _match_comma() -> None:
     _token(Tag.COMMA)
+    _next_eof()
+
+
+def _match_at_sign() -> None:
+    _token(Tag.AT_SIGN)
     _next_eof()
 
 
