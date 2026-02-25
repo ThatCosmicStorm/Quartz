@@ -76,7 +76,7 @@ class
 for
     "for" [expr "in"] expr suite
 function_definition
-    ["pub"] "fn" IDENT "(" [def_params] ")" [def_return] suite
+    ["pub"] "fn" IDENT "(" [def_params] ")" ["~>" TYPE] func_suite
 if
     "if" expr suite {"else" "if" expr suite} ["else" suite]
 match
@@ -98,8 +98,6 @@ def_parameter
     IDENT [":" TYPE] ["=" expr]
 def_params
     def_parameter {"," def_parameter} [","]
-def_return
-    "~>" TYPE ["{" expr "}"]
 import_parameter
     IDENT ["as" IDENT]
 import_params
@@ -120,6 +118,8 @@ suite
     NEWLINE INDENT statement+ DEDENT
 class_suite
     NEWLINE INDENT [DOCSTRING NEWLINE] (IDENT ":" TYPE ["=" expr] NEWLINE)+ function_definition+ DEDENT
+func_suite
+    NEWLINE INDENT [DOCSTRING NEWLINE] statement+ DEDENT
 match_suite
     NEWLINE INDENT ("case" expr suite)+ DEDENT
 
