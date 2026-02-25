@@ -196,11 +196,6 @@ def _next() -> None:
 
 
 def _token(tag: Tag, tok: str = "") -> None:
-    if _self.tokens:
-        if _self.tokens[-1].tag == Tag.STRING and tag == Tag.STRING:
-            _self.consecutive_strings += 1
-    else:
-        _self.consecutive_strings = 0
     _self.tokens.append(
         Token(
             tag,
@@ -296,7 +291,7 @@ def _match_char() -> None:
     elif _in(DIGITS):
         _integer()
     elif _check('"') or _check("'"):
-        _string(f=False)
+        _string()
     else:
         _match_brackets()
 
@@ -424,9 +419,6 @@ def _ident() -> None:
     if ident:
         if ident in KEYWORDS:
             _token(Tag.KEYWORD, ident)
-        elif ident == "f":
-            if _in({"'", '"'}):
-                _string(f=True)
         else:
             _token(Tag.IDENT, ident)
     if _self.is_eof:
@@ -497,41 +489,20 @@ def _period_period() -> None:
         _token(Tag.PERIOD_PERIOD)
 
 
-def _string(*, f: bool = False) -> None:
+def _string() -> None:
     quote: str = '"' if _check('"') else "'"
     start: int = _self.i
     if _next_eof():
         return
     while not (_self.is_eof or _check(quote)):
         _next()
-    string: StringIO = StringIO(
-        _self.program[start : _self.i + 1],
-    )
-    if f:
-        string.seek(0)
-        string.write("f")
+    string: str = _self.program[start + 1 : _self.i]
     if _self.program[start] == _self.program[_self.i]:
-        _token(Tag.STRING, string.getvalue())
-        if _self.consecutive_strings == _self.consec_string_for_doc:
-            _docstring()
+        _token(Tag.STRING, string)
         if _next_eof():
             return
     if _self.is_eof:
         _eof()
-
-
-def _docstring() -> None:
-    top: bool = _self.tokens[-1].tok == '"'
-    third: bool = _self.tokens[-3].tok == '""' or _self.tokens[-3].tok == 'f""'
-    if not (top and third):
-        return
-    docstring: str = (
-        _self.tokens[-3].tok + _self.tokens[-2].tok + _self.tokens[-1].tok
-    )
-    _self.tokens.pop()
-    _self.tokens.pop()
-    _self.tokens.pop()
-    _token(Tag.DOCSTRING, docstring)
 
 
 ##############################
