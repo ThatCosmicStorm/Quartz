@@ -190,6 +190,10 @@ MORE_TYPE
 OR_TYPE
     TYPE {"|" TYPE}
 
+BOOLEAN
+    "True"
+    | "False"
+
 TUPLE
     "(" [COLLECTION_ITEMS | (expr ",")] ")"
 LIST
