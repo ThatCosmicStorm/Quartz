@@ -83,8 +83,6 @@ if
     "if" expr suite {"else" "if" expr suite} ["else" suite]
 match
     "match" expr match_suite
-main
-    "main" suite
 while
     ("while" | "until") expr suite
 
