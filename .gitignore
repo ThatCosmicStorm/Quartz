@@ -1,4 +1,10 @@
-/__pycache__
-/test copy.qrtz
-/test.qrtz
-/.venv
+*.qrtz
+
+!parsetest.qrtz
+!op_parse_test.qrtz
+
+asttesting.py
+
+/src/quartz.egg-info
+/src/quartz/__pycache__
+explain.md
