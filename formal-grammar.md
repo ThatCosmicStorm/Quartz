@@ -248,7 +248,7 @@ COMPARISON_OP
 
 # ---- Lexical tokens (regex) ----
 IDENT
-    /([a-zA-Z_@]\w*\??)|($$)/
+    /([a-zA-Z_]\w*\??)/
 INTEGER
     /\d+/
 FLOAT
