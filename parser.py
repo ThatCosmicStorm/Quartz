@@ -5,10 +5,9 @@
 ##############################
 
 from collections.abc import Callable
-from io import StringIO
 from typing import NoReturn
 
-from nodes import BinaryOp, Node
+from nodes import BinaryOp, Ident, Integer, Node, Program
 from tokendef import Error, Tag, Token
 
 ##############################
@@ -85,7 +84,6 @@ type Logic = list[Expr] | list[dict[str, Expr]]
 
 
 class _State:
-    initialized: bool = False
     tokens: list[Token]
     i: int = 0
     token: Token
@@ -95,32 +93,6 @@ class _State:
 
 
 _self: _State = _State()
-
-
-##############################
-# INITIALIZE
-##############################
-
-
-def init(tokens: list[Token]) -> None:
-    """*Initialize the thing exactly once*.
-
-    Args:
-        tokens (list[Token]): *Quartz `Token`'s*
-
-    Raises:
-        RuntimeError: *If already initialized*
-
-    """
-    if _self.initialized:
-        msg: str = "Already initialized!"
-        raise RuntimeError(msg)
-
-    _self.tokens: list[Token] = tokens
-    _self.token: Token = _self.tokens[_self.i]
-    _self.length: int = len(_self.tokens)
-
-    _self.initialized = True
 
 
 ##############################
@@ -146,12 +118,19 @@ def _next(num: int = 1) -> Token:
     return past_token
 
 
-def _check(type_: str | Tag) -> bool:
-    return type_ in {_self.token.tag, _self.token.tok}
+def _check(type_: str | Tag, ahead: int = 0) -> bool:
+    i: int = _self.i + ahead
+    if_ahead: bool = i < _self.length
+    in_: bool = type_ in {_self.tokens[i].tag, _self.tokens[i].tok}
+    return if_ahead and in_
 
 
-def _in(set_: set[Tag] | set[str] | set[str | Tag]) -> bool:
-    return _self.token.tag in set_ or _self.token.tok in set_
+def _in(set_: set[Tag] | set[str] | set[str | Tag], ahead: int = 0) -> bool:
+    i: int = _self.i + ahead
+    if_ahead: bool = i < _self.length
+    tag: bool = _self.tokens[i].tag in set_
+    tok: bool = _self.tokens[i].tok in set_
+    return if_ahead and (tag or tok)
 
 
 def _match(type_: str | Tag) -> Token | None:
@@ -168,202 +147,71 @@ def _expect(type_: str | Tag) -> Token:
     )
 
 
-def _check_ahead(value: str | Tag, num: int = 1) -> bool:
-    i: int = _self.i + num
-    ahead: bool = i < _self.length
-    in_: bool = value in {_self.tokens[i].tag, _self.tokens[i].tok}
-    return ahead and in_
-
-
-def _in_ahead(
-    set_: set[Tag] | set[str] | set[str | Tag],
-    num: int = 1,
-) -> bool:
-    i: int = _self.i + num
-    ahead: bool = i < _self.length
-    tag: bool = _self.tokens[i].tag in set_
-    tok: bool = _self.tokens[i].tok in set_
-    return ahead and (tag or tok)
-
-
-def _for() -> Node:
-    return Node(
-        _expect("for").tok,
-        {"range": _range(), "suite": _suite()},
-    )
-
-
-def _function_definition() -> Node:
-    pub: bool = bool(_match("pub"))
-    _expect("fn")
-    name: str = _expect(Tag.IDENT).tok
-    _expect(Tag.L_PAREN)
-    if not _check(Tag.R_PAREN):
-        params: Node = _def_params()
-    _expect(Tag.R_PAREN)
-    if _match(Tag.TILDE_ARROW):
-        return_: Node = _def_return()
-    return Node(
-        "function_definition",
-        {
-            "pub": pub,
-            "name": name,
-            "params": params,
-            "return_": return_,
-            "suite": _suite(),
-        },
-    )
-
-
-def _if() -> Node:
-    _expect("if")
-    condition: Expr = _expr()
-    suite: Node = _suite()
-    if not _check("else"):
-        return Node(
-            "if",
-            {"condition": condition, "suite": suite},
-        )
-    else_ifs: list[Node] = []
-    else_: Node | None = None
-    while _match("else"):
-        if _match("if"):
-            else_ifs.append(
-                Node(
-                    "else_if",
-                    {"condition": _expr(), "suite": _suite()},
-                ),
-            )
-        else:
-            else_: Node = Node("else", _suite())
-    return Node(
-        "if",
-        {
-            "condition": condition,
-            "suite": suite,
-            "else_if": else_ifs,
-            "else": else_,
-        },
-    )
-
-
-def _match_() -> Node:
-    return Node(
-        _expect("match").tok,
-        {"target": _expr(), "suite": _match_suite()},
-    )
-
-
-def _main() -> Node:
-    return Node(_expect("main").tok, _suite())
-
-
-def _while() -> Node:
-    if _match("while"):
-        until: bool = False
-    elif _match("until"):
-        until: bool = True
-    return Node(
-        "while",
-        {
-            "until": until,
-            "condition": _expr(),
-            "suite": _suite(),
-        },
-    )
-
-
-def _wrap() -> Node:
-    _expect("wrap")
-    targets: list[Node] = [_target()]
-    while _match(Tag.COMMA):
-        if _check(Tag.NEWLINE):
-            break
-        targets.append(_target())
-    return Node(
-        "wrap",
-        {"targets": targets, "suite": _wrap_suite()},
-    )
-
-
-def _call_parameter() -> Node:
-    if _check(Tag.IDENT) and _check_ahead(Tag.EQUAL):
-        return Node(
-            "call_parameter",
-            {"name": _next(2).tok, "value": _expr()},
-        )
-    return Node(
-        "call_parameter",
-        {"name": None, "value": _expr()},
-    )
-
-
-def _call_params() -> Node:
-    return Node(
-        "call_params",
-        _listed(_call_parameter),
-    )
-
-
-def _def_parameter() -> Node:
-    name: str = _expect(Tag.IDENT).tok
-    annotation: Node | None = None
-    if _match(Tag.COLON):
-        annotation: Node = _type()
-    default: Expr | None = None
-    if _match(Tag.EQUAL):
-        default: Expr = _expr()
-    return Node(
-        "def_parameter",
-        {"name": name, "annotation": annotation, "default": default},
-    )
-
-
-def _def_params() -> Node:
-    params: list[Node] = [_def_parameter()]
-    while _match(Tag.COMMA):
-        if _check(Tag.R_PAREN):
-            break
-        params.append(_def_parameter())
-    return Node(
-        "def_params",
-        _listed(_def_parameter),
-    )
-
-
-def _def_return() -> Node:
-    _expect(Tag.TILDE_ARROW)
-    typ: Node = _type()
-    default: Expr | None = None
-    if _match(Tag.L_BRACE):
-        default: Expr = _expr()
-        _expect(Tag.R_BRACE)
-    return Node(
-        "def_return",
-        {"type": typ, "default": default},
-    )
-
-
 ##############################
 # MAIN FUNCTION
 ##############################
 
 
-def main() -> Node:
+def main(tokens: list[Token]) -> Program:
     """*Parse a list of Quartz tokens*.
 
-    Raises:
-        RuntimeError: *If called before initialization*
+    Args:
+        tokens (list[Token]): *Quartz `Token`'s*
 
     Returns:
         Node: *Every statement and expression*
 
     """
-    if not _self.initialized:
-        msg: str = "Called before initialization!"
-        raise RuntimeError(msg)
+    _self.tokens: list[Token] = tokens
+    _self.token: Token = _self.tokens[_self.i]
+    _self.length: int = len(_self.tokens)
 
-    statements: list[Node] = []
+    # _self.parse_statements: dict[str, Callable[[], Node]] = {
+    #     "assert": _assert,
+    #     "import": _basic_import,
+    #     "break": _break,
+    #     "continue": _continue,
+    #     "delete": _del,
+    #     "pass": _pass,
+    #     "raise": _raise,
+    #     "<<<": _return,
+    #     "from": _selective_import,
+    #     "type": _type_alias,
+    #     "yield": _yield,
+    #     "pub": _public,
+    #     "@": _decorator,
+    #     "for": _for,
+    #     "fn": _function_definition,
+    #     "if": _if,
+    #     "match": _match,
+    #     "struct": _struct,
+    #     "while": _while,
+    #     "until": _while,
+    # }
+    # _self.keywords: set[str] = _self.parse_statements.keys()
+
+    statements: list[Expr] = []
     while not _check(Tag.EOF):
-        statements.append(_statement())
-    return Node("program", statements)
+        statements.append(_expr())
+    return Program(statements)
+
+
+def _expr() -> Expr:
+    return _primary()
+
+
+class _UnknownPrimaryError(Exception):
+    pass
+
+
+def _primary() -> Node:
+    if _check(Tag.INTEGER):
+        return Integer(int(_next().tok))
+    if _check(Tag.IDENT):
+        return Ident(_next().tok)
+    raise _UnknownPrimaryError
+
+
+##############################
+# END OF FILE
+##############################
