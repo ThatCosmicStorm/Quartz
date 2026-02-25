@@ -72,7 +72,7 @@ yield
 
 # ---- Compound Cases ----
 class
-    ["pub"] "class" IDENT ["(" IDENT {"," IDENT} [","] ")"] suite
+    ["pub"] "class" IDENT ["(" IDENT {"," IDENT} [","] ")"] class_suite
 for
     "for" [expr "in"] expr suite
 function_definition
@@ -118,6 +118,8 @@ target
 # ---- Blocks ----
 suite
     NEWLINE INDENT statement+ DEDENT
+class_suite
+    NEWLINE INDENT [DOCSTRING NEWLINE] (IDENT ":" TYPE ["=" expr] NEWLINE)+ function_definition+ DEDENT
 match_suite
     NEWLINE INDENT ("case" expr suite)+ DEDENT
 
