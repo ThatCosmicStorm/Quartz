@@ -674,7 +674,11 @@ def _dollar() -> None:
     if _next_eof():
         return
     if _check_next("{", Tag.DOLLAR_L_BRACE):
-        _token(Tag.IDENT, "$")
+        _raise_error(
+            """\
+            `$` is not an identifiable token.
+            Did you mean `${` for a set?""",
+        )
 
 
 ##############################
