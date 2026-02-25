@@ -1,0 +1,11 @@
+[project]
+name = "quartz"
+version = "0.1.0"
+# Comes from lazy evaluation of type annotations
+requires-python = ">= 3.14"
+
+[project.scripts]
+quartz = "quartz.__main__:main"
+
+[project.urls]
+Repository = "https://github.com/thatcosmicstorm/quartz"
