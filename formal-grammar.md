@@ -16,8 +16,6 @@
 
 ## Grammar
 
-### [Off-side](https://en.wikipedia.org/wiki/Off-side_rule) mode (DEFAULT)
-
 ```gram
 
 program
