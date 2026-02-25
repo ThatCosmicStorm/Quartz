@@ -73,6 +73,8 @@ yield
 # ---- Compound Cases ----
 class
     ["pub"] "class" IDENT ["(" IDENT {"," IDENT} [","] ")"] class_suite
+decorator
+    "@" IDENT NEWLINE (decorator | function_definition)
 for
     "for" [expr "in"] expr suite
 function_definition
@@ -85,8 +87,6 @@ main
     "main" suite
 while
     ("while" | "until") expr suite
-wrap
-    "wrap" target {"," target} NEWLINE function_definition
 
 # ---- Statement Parts ----
 call_parameter
