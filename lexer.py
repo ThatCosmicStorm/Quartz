@@ -100,7 +100,6 @@ class _LexerError(Error):
 
 
 class _State:
-    initialized: bool = False
     program: str
     program_lines: Iterator[str]
     program_line: str
@@ -122,39 +121,6 @@ class _State:
 
 
 _self: _State = _State()
-
-
-##############################
-# INITIALIZE
-##############################
-
-
-def init(program: str) -> None:
-    """*Initialize the thing exactly once*.
-
-    Args:
-        program (str): *Quartz program*
-
-    Raises:
-        RuntimeError: *If already initialized*
-
-    """
-    if _self.initialized:
-        msg: str = "Already initialized!"
-        raise RuntimeError(msg)
-
-    _self.program: str = program + "\n"
-
-    _self.program_lines: Iterator[str] = iter(
-        _self.program.replace(" ", "·").splitlines(),
-    )
-    _self.program_line: str = next(
-        _self.program_lines,
-    )
-    _self.length: int = len(_self.program)
-    _self.char: str = _self.program[_self.i] if _self.length > 0 else ""
-
-    _self.initialized = True
 
 
 ##############################
@@ -227,19 +193,26 @@ def _next_eof() -> bool:
 ##############################
 
 
-def main() -> list[Token]:
+def main(program: str) -> list[Token]:
     """*Lex a Quartz program*.
 
-    Raises:
-        RuntimeError: *If called before initialization*
+    Args:
+        program (str): *Quartz file contents as `str`*
 
     Returns:
         list[Token]: *Quartz `Token`'s*
 
     """
-    if not _self.initialized:
-        msg: str = "Called before initialization!"
-        raise RuntimeError(msg)
+    _self.program: str = program + "\n"
+
+    _self.program_lines: Iterator[str] = iter(
+        _self.program.replace(" ", "·").splitlines(),
+    )
+    _self.program_line: str = next(
+        _self.program_lines,
+    )
+    _self.length: int = len(_self.program)
+    _self.char: str = _self.program[_self.i] if _self.length > 0 else ""
 
     _self.match_symbols: dict[str, Callable[[], None]] = {
         "&": _ampersand,
