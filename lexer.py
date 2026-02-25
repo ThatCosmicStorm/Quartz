@@ -1,14 +1,15 @@
-"""The Quartz Lexer."""
+"""*The Quartz Lexer*."""
 
 ##############################
 # IMPORTS
 ##############################
 
-from collections.abc import Callable, Iterator
-from io import StringIO
-from typing import ClassVar, Literal, NoReturn
+from typing import TYPE_CHECKING, ClassVar, Literal, NoReturn
 
 from tokendef import Error, Tag, Token
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
 
 ##############################
 # SET CONSTANTS
@@ -33,7 +34,6 @@ DIGITS: set[str] = {
 }
 
 KEYWORDS: set[str] = {
-    "alias",
     "and",
     "as",
     "assert",
@@ -41,13 +41,14 @@ KEYWORDS: set[str] = {
     "case",
     "class",
     "continue",
+    "del",
+    "dict",
     "else",
     "False",
     "float",
     "fn",
     "for",
     "from",
-    "hash",
     "if",
     "import",
     "in",
@@ -61,15 +62,14 @@ KEYWORDS: set[str] = {
     "pass",
     "pub",
     "raise",
-    "return",
     "set",
     "str",
+    "struct",
     "True",
     "tuple",
     "type",
     "until",
     "while",
-    "wrap",
     "yield",
 }
 
@@ -236,7 +236,7 @@ def main(program: str) -> list[Token]:
         "/": _slash,
         "~": _tilde,
     }
-    _self.symbols: set[str] = _self.match_symbols.keys()
+    _self.symbols: set[str] = set(_self.match_symbols.keys())
 
     if _self.length == 0:
         _eof()
