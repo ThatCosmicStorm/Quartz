@@ -9,16 +9,18 @@ Currently only displays the output of the lexer.
 # IMPORTS
 ##############################
 
+import ast
 import sys
 from pathlib import Path
 from pprint import pprint
 from typing import TYPE_CHECKING, Literal
 
+import astcompile
 import lexer
 import parser
 
 if TYPE_CHECKING:
-    from nodes import Node
+    from nodes import Program
     from tokendef import Token
 
 NUM_OF_VALID_ARGS: Literal[2] = 2
@@ -45,9 +47,19 @@ def _clear_terminal() -> None:
 
 
 def _quartz(program: str) -> None:
-    lexer.init(program)
-    tokens: list[Token] = lexer.main()
-    pprint(tokens)
+    tokens: list[Token] = lexer.main(program)
+    # pprint(tokens)
+
+    program: Program = parser.main(tokens)
+    pprint(program)
+
+    module: ast.Module = astcompile.main(program)
+    pprint(ast.dump(module))
+
+    python_equiv: str = ast.unparse(module)
+    pprint(python_equiv)
+
+    exec(python_equiv)  # noqa: S102
 
 
 ##############################
@@ -91,7 +103,7 @@ def main(
 
 if __name__ == "__main__":
     main(
-        filename=".\\parsetest.qrtz",
+        filename=r".\examples\parsetest.qrtz",
         debugging=True,
     )
 
