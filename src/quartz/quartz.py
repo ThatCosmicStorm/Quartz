@@ -15,13 +15,13 @@ from pathlib import Path
 from pprint import pprint
 from typing import TYPE_CHECKING, Literal
 
-import astcompile
-import lexer
-import parser
+import quartz.astcompile
+import quartz.lexer
+import quartz.parser
 
 if TYPE_CHECKING:
-    from nodes import Program
-    from tokendef import Token
+    from .nodes import Program
+    from .tokendef import Token
 
 NUM_OF_VALID_ARGS: Literal[2] = 2
 
@@ -47,13 +47,13 @@ def _clear_terminal() -> None:
 
 
 def _quartz(program: str) -> None:
-    tokens: list[Token] = lexer.main(program)
+    tokens: list[Token] = quartz.lexer.main(program)
     # pprint(tokens)
 
-    program: Program = parser.main(tokens)
+    program: Program = quartz.parser.main(tokens)
     pprint(program)
 
-    module: ast.Module = astcompile.main(program)
+    module: ast.Module = quartz.astcompile.main(program)
     pprint(ast.dump(module))
 
     python_equiv: str = ast.unparse(module)

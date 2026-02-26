@@ -7,10 +7,10 @@
 import ast
 from typing import TYPE_CHECKING
 
-from nodes import Integer
+from .nodes import Integer
 
 if TYPE_CHECKING:
-    from nodes import BinaryOp, Expr, Node, Program
+    from .nodes import BinaryOp, Expr, Node, Program
 
 
 ##############################

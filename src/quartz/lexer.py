@@ -6,7 +6,7 @@
 
 from typing import TYPE_CHECKING, ClassVar, Literal, NoReturn
 
-from tokendef import Error, Tag, Token
+from .tokendef import Error, Tag, Token
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator

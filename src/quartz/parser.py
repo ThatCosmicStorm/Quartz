@@ -7,8 +7,8 @@
 from collections.abc import Callable
 from typing import NoReturn
 
-from nodes import BinaryOp, Ident, Integer, Node, Program
-from tokendef import Error, Tag, Token
+from .nodes import BinaryOp, Ident, Integer, Node, Program
+from .tokendef import Error, Tag, Token
 
 ##############################
 # SET CONSTANTS
