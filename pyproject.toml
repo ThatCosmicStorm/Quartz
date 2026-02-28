@@ -1,8 +1,8 @@
 [project]
 name = "quartz"
 version = "0.1.0"
-# Comes from lazy evaluation of type annotations
-requires-python = ">= 3.14"
+# Comes from `match` syntax
+requires-python = ">= 3.10"
 
 [project.scripts]
 quartz = "quartz.__main__:main"
