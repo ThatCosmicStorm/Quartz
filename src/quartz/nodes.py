@@ -5,58 +5,77 @@
 ##############################
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .tokendef import Tag
+from .tokendef import Tag
 
 ##############################
 # NODES
 ##############################
 
 
-type Expr = Node | BinaryOp
-
-
 @dataclass(frozen=True, slots=True)
 class Node:
-    """*All statements and almost all expressions*.
-
-    Expressions which are binary or unary operations have their own base node.
-    """
+    """*Adam*."""
 
 
 @dataclass(frozen=True, slots=True)
-class BinaryOp:
-    """*Binary operation: two operands*.
+class Expr(Node):
+    """*Expression*."""
 
-    Can also store unary operations by setting `left=None`.
-    """
 
-    op: str | Tag
-    left: Expr | None
-    right: Expr
+@dataclass(frozen=True, slots=True)
+class Stmt(Node):
+    """*Statement*."""
 
 
 @dataclass(frozen=True, slots=True)
 class Program:
     """*Contains all statements and expressions for the program*."""
 
-    statements: list[Node | BinaryOp]
+    statements: list[Stmt]
 
 
 @dataclass(frozen=True, slots=True)
-class Ident(Node):
-    """*Identifier*."""
-
-    name: str
+class ExprStmt(Stmt):
+    """*Contains one expression*."""
 
 
 @dataclass(frozen=True, slots=True)
-class Integer(Node):
-    """*Integer*."""
+class Op(Expr):
+    """*Operation with one or more operands*."""
 
-    value: int
+
+@dataclass(frozen=True, slots=True)
+class BinaryOp(Op):
+    """*Binary operation*."""
+
+    op: Tag
+    left: Expr
+    right: Expr
+
+
+@dataclass(frozen=True, slots=True)
+class BoolOp(Op):
+    """*A boolean operation, `or` or `and`*."""
+
+    op: str
+    left: Expr
+    right: Expr
+
+
+@dataclass(frozen=True, slots=True)
+class UnaryOp(Op):
+    """*Unary operation*."""
+
+    op: Tag
+    operand: Expr
+
+
+@dataclass(frozen=True, slots=True)
+class Constant(Expr):
+    """*Integer, float, string, boolean, or None*."""
+
+    value: int | float | str | bool | None
 
 
 ##############################
