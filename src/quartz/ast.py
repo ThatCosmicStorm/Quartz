@@ -39,6 +39,8 @@ class Program:
 class ExprStmt(Stmt):
     """*Contains one expression*."""
 
+    expr: Expr
+
 
 @dataclass(frozen=True, slots=True)
 class Op(Expr):
