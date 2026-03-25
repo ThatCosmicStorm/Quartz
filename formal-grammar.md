@@ -1,6 +1,6 @@
 # Formal Grammar
 
-## Grammar Syntax
+## Syntax
 
 | Symbol | Definition |
 | - | - |
@@ -120,11 +120,9 @@ pipe_assign
 pipe_attribute
     ["."] {IDENT "."} IDENT
 pipe_stage
-    pipe_attribute [("(" [call_params] ")") | (":" expr {"," expr})]
+    pipe_attribute ["(" [call_params] ")"]
 stmt_end
     NEWLINE
-target
-    IDENT ["(" call_params ")"]
 
 # ---- Blocks ----
 suite
@@ -147,7 +145,7 @@ disjunction
 conjunction
     inversion {"and" inversion}
 inversion
-    "not" inversion
+    ("not" inversion) | comparison
 
 comparison
     bitwise_or {COMPARISON_OP bitwise_or}
@@ -164,7 +162,7 @@ sum
 term
     factor {("*" | "/" | "//" | "%") factor}
 factor
-    power | (["+" | "-" | "~"] factor)
+    power | (("+" | "-" | "~") factor)
 power
     postfix {"^" factor}
 postfix
@@ -178,36 +176,39 @@ subscript_list
 subscript
     slice | expr
 slice
-    [disjunction] ":" [expr] [":" [expr]]
+    [expr] ":" [expr] [":" [expr]]
 primary
-    BOOLEAN | DICT
-            | DICT_COMPREHENSION
-            | DOCSTRING
-            | FLOAT
-            | GENERATOR_COMPREHENSION
-            | IDENT
-            | INTEGER
-            | LIST
-            | LIST_COMPREHENSION
-            | SET
-            | SET_COMPREHENSION
-            | STRING
-            | TUPLE
-            | "(" expr ")"
+    BOOLEAN
+    | DICT
+    | DICT_COMPREHENSION
+    | DOCSTRING
+    | ELLIPSIS
+    | FLOAT
+    | GENERATOR_COMPREHENSION
+    | IDENT
+    | INTEGER
+    | LIST
+    | LIST_COMPREHENSION
+    | NONE
+    | SET
+    | SET_COMPREHENSION
+    | STRING
+    | TUPLE
+    | "(" expr ")"
 
 # ---- Other Tokens ----
 TYPE
-    INNER_TYPE {"|" INNER_TYPE}
-INNER_TYPE
-    IDENT ["[" [MORE_TYPE] "]"]
-MORE_TYPE
-    OR_TYPE {"," OR_TYPE} [","]
-OR_TYPE
-    TYPE {"|" TYPE}
+    postfix {"|" postfix}
 
 BOOLEAN
     "True"
     | "False"
+
+NONE
+    "None"
+
+ELLIPSIS
+    "..."
 
 TUPLE
     "(" [COLLECTION_ITEMS | (expr ",")] ")"

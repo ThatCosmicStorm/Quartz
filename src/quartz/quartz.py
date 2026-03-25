@@ -8,7 +8,6 @@ Currently only displays the output of the lexer.
 ##############################
 # IMPORTS
 ##############################
-
 import ast
 import sys
 from pathlib import Path
@@ -20,7 +19,9 @@ import quartz.lexer
 import quartz.parser
 
 if TYPE_CHECKING:
-    from .nodes import Program
+    from types import CodeType
+
+    from .ast import Program
     from .tokendef import Token
 
 NUM_OF_VALID_ARGS: Literal[2] = 2
@@ -46,9 +47,9 @@ def _clear_terminal() -> None:
 ##############################
 
 
-def _quartz(program: str) -> None:
+def _quartz(program: str, filename: Path) -> None:
     tokens: list[Token] = quartz.lexer.main(program)
-    # pprint(tokens)
+    pprint(tokens)
 
     program: Program = quartz.parser.main(tokens)
     pprint(program)
@@ -56,10 +57,10 @@ def _quartz(program: str) -> None:
     module: ast.Module = quartz.astcompile.main(program)
     pprint(ast.dump(module))
 
-    python_equiv: str = ast.unparse(module)
-    pprint(python_equiv)
+    ast.fix_missing_locations(module)
+    code: CodeType = compile(module, filename=filename, mode="exec")
 
-    exec(python_equiv)  # noqa: S102
+    exec(code)  # noqa: S102
 
 
 ##############################
@@ -68,9 +69,7 @@ def _quartz(program: str) -> None:
 
 
 def main(
-    *,
     filename: str = "",
-    debugging: bool = False,
 ) -> None:
     """*Use `quartz.py` in the command line*.
 
@@ -78,7 +77,6 @@ def main(
 
     Args:
         filename (str): *Path to Quartz file*
-        debugging (bool): *Removes argument requirements*
 
     Raises:
         _NumberOfArgsError: *Only takes two arguments*
@@ -86,26 +84,19 @@ def main(
     """
     _clear_terminal()
 
-    if not debugging:
-        num_of_args: int = len(sys.argv)
-        if num_of_args != NUM_OF_VALID_ARGS:
-            raise _NumberOfArgsError
+    num_of_args: int = len(sys.argv)
+    if num_of_args != NUM_OF_VALID_ARGS:
+        raise _NumberOfArgsError
 
     file: Path = Path(filename) if filename else Path(sys.argv[1])
     try:
         with Path.open(file, encoding="utf8") as f:
-            _quartz(f.read())
+            _quartz(f.read(), file)
     except FileNotFoundError:
         sys.exit(
             f"Error: File '{sys.argv[1]}' not found",
         )
 
-
-if __name__ == "__main__":
-    main(
-        filename=r".\examples\parsetest.qrtz",
-        debugging=True,
-    )
 
 ##############################
 # END OF FILE

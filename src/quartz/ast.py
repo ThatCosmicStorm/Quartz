@@ -4,7 +4,8 @@
 # IMPORTS
 ##############################
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from types import EllipsisType
 
 from .tokendef import Tag
 
@@ -37,9 +38,46 @@ class Program:
 
 @dataclass(frozen=True, slots=True)
 class ExprStmt(Stmt):
-    """*Contains one expression*."""
+    """*Statement containing only a bare expression*."""
 
     expr: Expr
+
+
+@dataclass(frozen=True, slots=True)
+class Pipeline(Expr):
+    """*Quartz-signature pipelines*."""
+
+    initial_value: Expr
+    stages: list[Expr]
+
+
+@dataclass(frozen=True, slots=True)
+class List(Expr):
+    """*A list*."""
+
+    elements: list[Expr] = field(default_factory=list)
+
+
+@dataclass(frozen=True, slots=True)
+class Tuple(Expr):
+    """*A tuple*."""
+
+    elements: list[Expr] = field(default_factory=list)
+
+
+@dataclass(frozen=True, slots=True)
+class Set(Expr):
+    """*A set*."""
+
+    elements: list[Expr] = field(default_factory=list)
+
+
+@dataclass(frozen=True, slots=True)
+class Dict(Expr):
+    """*A dictionary*."""
+
+    keys: list[Expr] = field(default_factory=list)
+    values: list[Expr] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,15 +95,6 @@ class BinaryOp(Op):
 
 
 @dataclass(frozen=True, slots=True)
-class BoolOp(Op):
-    """*A boolean operation, `or` or `and`*."""
-
-    op: str
-    left: Expr
-    right: Expr
-
-
-@dataclass(frozen=True, slots=True)
 class UnaryOp(Op):
     """*Unary operation*."""
 
@@ -74,10 +103,85 @@ class UnaryOp(Op):
 
 
 @dataclass(frozen=True, slots=True)
-class Constant(Expr):
-    """*Integer, float, string, boolean, or None*."""
+class BoolOp(Op):
+    """*Boolean operation: `or` or `and`*."""
 
-    value: int | float | str | bool | None
+    op: Tag
+    values: list[Expr]
+
+
+@dataclass(frozen=True, slots=True)
+class Comparison(Op):
+    """*Comparison of two or more values*."""
+
+    left: Expr
+    ops: list[Tag]
+    comparators: list[Expr]
+
+
+@dataclass(frozen=True, slots=True)
+class Keyword(Expr):
+    """*A keyword argument for function calls or class definitions*."""
+
+    arg: str
+    value: Expr
+
+
+@dataclass(frozen=True, slots=True)
+class Call(Expr):
+    """*A function call*."""
+
+    func: Expr
+    args: list[Expr] = field(default_factory=list)
+    keywords: list[Keyword] = field(default_factory=list)
+
+
+@dataclass(frozen=True, slots=True)
+class TernaryOp(Op):
+    """*Ternary operation: a if b else c*."""
+
+    test: Expr  # a
+    body: Expr  # b
+    orelse: Expr  # c
+
+
+@dataclass(frozen=True, slots=True)
+class Attribute(Expr):
+    """*Attribute access*."""
+
+    value: Expr
+    attr: str
+
+
+@dataclass(frozen=True, slots=True)
+class Subscript(Expr):
+    """*A subscript*."""
+
+    value: Expr
+    slice_: Expr
+
+
+@dataclass(frozen=True, slots=True)
+class Slice(Expr):
+    """*Slice*."""
+
+    lower: Expr | None = None
+    upper: Expr | None = None
+    step: Expr | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Constant(Expr):
+    """*Integer, float, string, boolean, Ellipsis or None*."""
+
+    value: int | float | str | bool | EllipsisType | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Ident(Expr):
+    """*Identifier*."""
+
+    name: str
 
 
 ##############################

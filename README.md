@@ -8,16 +8,6 @@
 - Quartz is a syntactic and structural transformation over Python.
 - Its defining feature is *pipelines*.
 
-## Installation
-
-- Requires Python 3.12 or newer
-
-```bash
-git clone https://github.com/thatcosmicstorm/quartz.git
-cd quartz
-pip install -e .
-```
-
 ## Code Snippets
 
 <table>
@@ -45,6 +35,16 @@ print(" HELLO WORLD ".strip().lower())
 
 - Both programs accomplish the same task.
 - Comparing the two, Quartz conveys a much more understandable flow of functions.
+
+## Installation
+
+- Requires Python 3.10 or newer
+
+```bash
+git clone https://github.com/thatcosmicstorm/quartz.git
+cd quartz
+pip install -e .
+```
 
 ## Contributing to Quartz
 

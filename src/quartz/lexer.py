@@ -4,12 +4,10 @@
 # IMPORTS
 ##############################
 
-from typing import TYPE_CHECKING, ClassVar, Literal, NoReturn
+from collections.abc import Callable, Iterator
+from typing import ClassVar, Literal, NoReturn
 
 from .tokendef import Error, Tag, Token
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
 
 ##############################
 # SET CONSTANTS
@@ -122,7 +120,6 @@ class _State:
 
 _self: _State = _State()
 
-
 ##############################
 # HELPER FUNCTIONS
 ##############################
@@ -137,7 +134,7 @@ def _raise_error(message: str) -> NoReturn:
     )
 
 
-def _check(char: str = "") -> bool:
+def _check(char: str) -> bool:
     return _self.char == char
 
 
@@ -222,6 +219,7 @@ def main(program: str) -> list[Token]:
         "!": _bang,
         "^": _caret,
         ":": _colon,
+        "$": _dollar,
         "=": _equal,
         "#": _hashtag,
         "<": _l_angle,
@@ -290,9 +288,6 @@ def _match_brackets() -> None:
             _token(Tag.L_BRACE)
         case "}":
             _token(Tag.R_BRACE)
-        # The `else` block at the top already takes care of this.
-        case _:
-            pass
 
     _next_eof()
 
@@ -395,11 +390,41 @@ def _ident() -> None:
     ident: str = _self.program[start : _self.i]
     if ident:
         if ident in KEYWORDS:
-            _token(Tag.KEYWORD, ident)
+            _keyword(ident)
         else:
             _token(Tag.IDENT, ident)
     if _self.is_eof:
         _eof()
+
+
+def _keyword(ident: str) -> None:  # noqa: C901, PLR0912
+    match ident:
+        case "and":
+            _token(Tag.AND)
+        case "or":
+            _token(Tag.OR)
+        case "not":
+            if _self.tokens[-1].tag == Tag.IS:
+                _self.tokens.pop()
+                _token(Tag.IS_NOT)
+            else:
+                _token(Tag.NOT)
+        case "is":
+            _token(Tag.IS)
+        case "in":
+            if _self.tokens[-1].tag == Tag.NOT:
+                _self.tokens.pop()
+                _token(Tag.NOT_IN)
+            else:
+                _token(Tag.IN)
+        case "True":
+            _token(Tag.TRUE)
+        case "False":
+            _token(Tag.FALSE)
+        case "None":
+            _token(Tag.NONE)
+        case _:
+            _token(Tag.KEYWORD, ident)
 
 
 def _integer() -> None:
@@ -407,7 +432,7 @@ def _integer() -> None:
     while not _self.is_eof and _in(DIGITS):
         _next()
         if _check("."):
-            _int_period(start, end=_self.i)
+            _int_period(start)
             return
     number: str = _self.program[start : _self.i]
     if number and not _check("."):
@@ -416,13 +441,8 @@ def _integer() -> None:
         _eof()
 
 
-def _int_period(start: int = 0, end: int = 0) -> None:
+def _int_period(start: int = 0) -> None:
     if _next_eof():
-        return
-    integer: str = _self.program[start:end]
-    if _check("."):
-        _token(Tag.INTEGER, integer)
-        _period_period()
         return
     while not _self.is_eof and _in(DIGITS):
         _next()
@@ -435,12 +455,20 @@ def _int_period(start: int = 0, end: int = 0) -> None:
 def _period() -> None:
     if _next_eof():
         return
-    if _check("."):
-        _period_period()
-    elif _in(DIGITS):
+    if _in(DIGITS):
         _period_int()
-    else:
+    if not _check("."):
         _token(Tag.PERIOD)
+        return
+    if _next_eof():
+        return
+    if not _check("."):
+        _raise_error(
+            """\
+            `..` is not a valid token.
+            Did you mean `.` or `...`?""",
+        )
+    _token(Tag.ELLIPSIS)
 
 
 def _period_int() -> None:
@@ -451,19 +479,6 @@ def _period_int() -> None:
     _token(Tag.FLOAT, number)
     if _self.is_eof:
         _eof()
-
-
-def _period_period() -> None:
-    if _next_eof():
-        return
-    if _check("="):
-        _token(Tag.PERIOD_PERIOD_EQUAL)
-        _next_eof()
-    elif _check("."):
-        _token(Tag.PERIOD_PERIOD_PERIOD)
-        _next_eof()
-    else:
-        _token(Tag.PERIOD_PERIOD)
 
 
 def _string() -> None:
@@ -523,8 +538,10 @@ def _percent() -> None:
         return
     if _check_next("=", Tag.PERCENT_EQUAL):
         return
-    if not _check_next("{", Tag.PERCENT_L_BRACE):
-        _token(Tag.PERCENT)
+    if _check_next("{", Tag.PERCENT_L_BRACE):
+        _self.in_parens += 1
+        return
+    _token(Tag.PERCENT)
 
 
 def _asterisk() -> None:
@@ -635,7 +652,7 @@ def _ampersand() -> None:
 def _bang() -> None:
     if _next_eof():
         return
-    if _check_next("=", Tag.BANG_EQUAL):
+    if not _check_next("=", Tag.BANG_EQUAL):
         _raise_error(
             """\
             `!` is not an operator.
@@ -647,11 +664,13 @@ def _dollar() -> None:
     if _next_eof():
         return
     if _check_next("{", Tag.DOLLAR_L_BRACE):
-        _raise_error(
-            """\
-            `$` is not an identifiable token.
-            Did you mean `${` for a set?""",
-        )
+        _self.in_parens += 1
+        return
+    _raise_error(
+        """\
+        `$` is not an identifiable token.
+        Did you mean `${` for a set?""",
+    )
 
 
 ##############################
