@@ -152,6 +152,7 @@ def main(tokens: list[Token]) -> q.Program:
 
     Args:
         tokens (list[Token]): *Quartz `Token`'s*
+        debug (bool): *If True, prints each statement as it's parsed*
 
     Returns:
         Node: *Every statement and expression*
@@ -199,7 +200,6 @@ def main(tokens: list[Token]) -> q.Program:
     statements: list[q.Stmt] = []
     while not _check(Tag.EOF):
         statements.append(_stmt())
-        print(statements[-1])
     return q.Program(statements)
 
 
@@ -265,11 +265,16 @@ def _expr() -> q.Expr:
 def _pipeline(first: q.Expr) -> q.Expr:
     stage: q.Expr = first
     while _match(Tag.ARROW):
-        args: list[q.Expr] = [stage]
+        args: list[q.Expr] = []
+        if _match(Tag.PERIOD):
+            stage = q.Attribute(stage, _expect(Tag.IDENT).tok)
+            pf: q.Expr = _postfix(stage)
+        else:
+            args.append(stage)
+            pf: q.Expr = _postfix()
         kws: list[q.Keyword] = []
-        pf: q.Expr = _postfix()
         if isinstance(pf, q.Call):
-            args: list[q.Expr] = [stage, *(arg for arg in pf.args)]
+            args.extend(arg for arg in pf.args)
             kws: list[q.Keyword] = pf.keywords
         stage = q.Call(
             pf.func if isinstance(pf, q.Call) else pf,
@@ -385,8 +390,8 @@ def _power() -> q.Expr:
     return expr
 
 
-def _postfix() -> q.Expr:
-    expr: q.Expr = _primary()
+def _postfix(first: q.Expr | None = None) -> q.Expr:
+    expr: q.Expr = first or _primary()
     while _check(Tag.PERIOD, Tag.L_PAREN, Tag.L_BRACKET):
         if _match(Tag.PERIOD):
             expr = q.Attribute(expr, _expect(Tag.IDENT).tok)

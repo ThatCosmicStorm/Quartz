@@ -49,19 +49,24 @@ def _clear_terminal() -> None:
 
 def _quartz(program: str, filename: Path, *, debug: bool) -> None:
     tokens: list[Token] = quartz.lexer.main(program)
-    pprint(tokens)
 
-    program: Program = quartz.parser.main(tokens)
-    pprint(program)
+    prog: Program = quartz.parser.main(tokens)
 
-    if debug:
-        sys.exit()
-
-    module: ast.Module = quartz.astcompile.main(program)
-    pprint(ast.dump(module))
+    module: ast.Module = quartz.astcompile.main(prog)
 
     ast.fix_missing_locations(module)
     code: CodeType = compile(module, filename=filename, mode="exec")
+
+    if debug:
+        print("File input:")
+        pprint(program)
+        print("\n" + "Lexer:")
+        pprint(tokens)
+        print("\n" + "Parser:")
+        pprint(prog)
+        print("\n" + "AST Compile:")
+        pprint(module)
+        print("\n" + "Output:")
 
     exec(code)  # noqa: S102
 
@@ -92,7 +97,11 @@ def main(
         raise _NumberOfArgsError
 
     file: Path = Path(filename) if filename else Path(sys.argv[1])
-    debug: bool = bool(sys.argv[2] == "-debug")
+    debug: bool = (
+        bool(sys.argv[2] == "-debug")
+        if num_of_args > NUM_OF_VALID_ARGS
+        else False
+    )
     try:
         with Path.open(file, encoding="utf8") as f:
             _quartz(f.read(), file, debug=debug)

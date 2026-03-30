@@ -28,7 +28,7 @@ call_parameter
 call_params
     call_parameter {"," call_parameter} [","]
 pipe_stage
-    postfix
+    ["."] postfix
 stmt_end
     NEWLINE
 
