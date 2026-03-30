@@ -256,15 +256,27 @@ def _call_params() -> tuple[list[q.Expr], list[q.Keyword]]:
 
 
 def _expr() -> q.Expr:
-    return _ternary()
+    expr: q.Expr = _ternary()
+    if not _check(Tag.ARROW):
+        return expr
+    return _pipeline(expr)
 
-    # expr: q.Expr = _ternary()
-    # if not _check(Tag.ARROW):
-    #     return expr
-    # lst: list[q.Expr] = []
-    # while _match(Tag.ARROW):
-    #     lst.append(_pipe_stage())
-    # return q.Pipeline(expr, lst)
+
+def _pipeline(first: q.Expr) -> q.Expr:
+    stage: q.Expr = first
+    while _match(Tag.ARROW):
+        args: list[q.Expr] = [stage]
+        kws: list[q.Keyword] = []
+        pf: q.Expr = _postfix()
+        if isinstance(pf, q.Call):
+            args: list[q.Expr] = [stage, *(arg for arg in pf.args)]
+            kws: list[q.Keyword] = pf.keywords
+        stage = q.Call(
+            pf.func if isinstance(pf, q.Call) else pf,
+            args=args,
+            keywords=kws,
+        )
+    return stage
 
 
 def _ternary() -> q.Expr:

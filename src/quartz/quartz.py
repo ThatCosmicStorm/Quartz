@@ -54,6 +54,8 @@ def _quartz(program: str, filename: Path) -> None:
     program: Program = quartz.parser.main(tokens)
     pprint(program)
 
+    sys.exit()
+
     module: ast.Module = quartz.astcompile.main(program)
     pprint(ast.dump(module))
 

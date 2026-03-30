@@ -27,12 +27,14 @@ call_parameter
     | (IDENT ["=" expr])
 call_params
     call_parameter {"," call_parameter} [","]
+pipe_stage
+    postfix
 stmt_end
     NEWLINE
 
 # ---- Expressions ----
 expr
-    ternary
+    ternary {"->" pipe_stage}
 
 ternary
     disjunction ["if" expr "else" expr]

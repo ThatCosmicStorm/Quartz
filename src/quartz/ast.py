@@ -44,14 +44,6 @@ class ExprStmt(Stmt):
 
 
 @dataclass(frozen=True, slots=True)
-class Pipeline(Expr):
-    """*Quartz-signature pipelines*."""
-
-    initial_value: Expr
-    stages: list[Expr]
-
-
-@dataclass(frozen=True, slots=True)
 class List(Expr):
     """*A list*."""
 
