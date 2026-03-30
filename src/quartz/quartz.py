@@ -34,7 +34,7 @@ NUM_OF_VALID_ARGS: Literal[2] = 2
 class _NumberOfArgsError(Exception):
     def __init__(self) -> None:
         super().__init__(
-            "Usage: `quartz` `filename`",
+            "Usage: `quartz` `filename` [`flag`]",
         )
 
 
@@ -47,14 +47,15 @@ def _clear_terminal() -> None:
 ##############################
 
 
-def _quartz(program: str, filename: Path) -> None:
+def _quartz(program: str, filename: Path, *, debug: bool) -> None:
     tokens: list[Token] = quartz.lexer.main(program)
     pprint(tokens)
 
     program: Program = quartz.parser.main(tokens)
     pprint(program)
 
-    sys.exit()
+    if debug:
+        sys.exit()
 
     module: ast.Module = quartz.astcompile.main(program)
     pprint(ast.dump(module))
@@ -87,13 +88,14 @@ def main(
     _clear_terminal()
 
     num_of_args: int = len(sys.argv)
-    if num_of_args != NUM_OF_VALID_ARGS:
+    if num_of_args < NUM_OF_VALID_ARGS:
         raise _NumberOfArgsError
 
     file: Path = Path(filename) if filename else Path(sys.argv[1])
+    debug: bool = bool(sys.argv[2] == "-debug")
     try:
         with Path.open(file, encoding="utf8") as f:
-            _quartz(f.read(), file)
+            _quartz(f.read(), file, debug=debug)
     except FileNotFoundError:
         sys.exit(
             f"Error: File '{sys.argv[1]}' not found",

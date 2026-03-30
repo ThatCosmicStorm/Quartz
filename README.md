@@ -50,8 +50,4 @@ pip install -e .
 
 - Pay attention to the `working-grammar.md` file, as it contains all the grammar for currently implemented features.
   - Eventually, the goal is to have `working-grammar.md` *match* `formal-grammar.md`.
-- The interpreter, `quartz.py`, prints parser output for now.
-  - This is intended behavior.
-  - It may bounce between printing parser output and output from `astcompile.py`.
-  - I will update this README accordingly once `quartz.py` actually starts... interpreting.
 - **Open issues on GitHub if there are any problems, ideas, suggestions, comments, etc.**
