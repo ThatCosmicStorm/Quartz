@@ -46,14 +46,12 @@ cd quartz
 pip install -e .
 ```
 
-## Contributing to Quartz
-
-- Have any ideas/suggestions to improve Quartz?
-- Is everything breaking when you run your program?
-- Open an issue on GitHub!
-
 ## WORK IN PROGRESS
 
-- For now, Quartz is mainly theoretical, so you can't play around with it *yet*.
-  - *Everything is subject to change.*
-- After a working implementation is established, my next focus will be on docs.
+- Pay attention to the `working-grammar.md` file, as it contains all the grammar for currently implemented features.
+  - Eventually, the goal is to have `working-grammar.md` *match* `formal-grammar.md`.
+- The interpreter, `quartz.py`, prints parser output for now.
+  - This is intended behavior.
+  - It may bounce between printing parser output and output from `astcompile.py`.
+  - I will update this README accordingly once `quartz.py` actually starts... interpreting.
+- **Open issues on GitHub if there are any problems, ideas, suggestions, comments, etc.**
