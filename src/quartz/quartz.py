@@ -48,26 +48,26 @@ def _clear_terminal() -> None:
 
 
 def _quartz(program: str, filename: Path, *, debug: bool) -> None:
-    tokens: list[Token] = quartz.lexer.main(program)
-
-    prog: Program = quartz.parser.main(tokens)
-
-    module: ast.Module = quartz.astcompile.main(prog)
-
-    ast.fix_missing_locations(module)
-    code: CodeType = compile(module, filename=filename, mode="exec")
-
     if debug:
         print("File input:")
         pprint(program)
+    tokens: list[Token] = quartz.lexer.main(program)
+    if debug:
         print("\n" + "Lexer:")
         pprint(tokens)
+    prog: Program = quartz.parser.main(tokens)
+    if debug:
         print("\n" + "Parser:")
-        pprint(prog)
+        for stmt in prog.statements:
+            pprint(stmt)
+    module: ast.Module = quartz.astcompile.main(prog)
+    if debug:
         print("\n" + "AST Compile:")
-        pprint(module)
+        print(ast.dump(module, indent=4))
+    ast.fix_missing_locations(module)
+    code: CodeType = compile(module, filename=filename, mode="exec")
+    if debug:
         print("\n" + "Output:")
-
     exec(code)  # noqa: S102
 
 

@@ -19,7 +19,18 @@
 ```gram
 
 program
-    {expr stmt_end}
+    {statement}
+
+# ---- Statements ----
+statement
+    (expr | simple) stmt_end
+
+simple
+    assign
+
+# ---- Simple Cases ----
+assign
+    expr ("=" expr)+
 
 # ---- Statement Parts ----
 call_parameter

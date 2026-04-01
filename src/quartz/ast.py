@@ -37,6 +37,14 @@ class Program:
 
 
 @dataclass(frozen=True, slots=True)
+class Assign(Stmt):
+    """*An assignment*."""
+
+    targets: list[Expr]
+    value: Expr
+
+
+@dataclass(frozen=True, slots=True)
 class ExprStmt(Stmt):
     """*Statement containing only a bare expression*."""
 

@@ -211,13 +211,27 @@ def main(tokens: list[Token]) -> q.Program:
 def _stmt() -> q.Stmt:
     # For now, we're just focusing on expressions.
     expr: q.Expr = _expr()
+    stmt: q.Stmt
+    if _match(Tag.EQUAL):  # noqa: SIM108
+        stmt = _assign(expr)
+    else:
+        stmt = q.ExprStmt(expr)
     _expect(Tag.NEWLINE)
-    return q.ExprStmt(expr)
+    return stmt
 
 
 ##############################
 # SIMPLE CASES
 ##############################
+
+
+def _assign(first: q.Expr) -> q.Assign:
+    targets: list[q.Expr] = [first, _expr()]
+    while _match(Tag.EQUAL):
+        targets.append(_expr())
+    value: q.Expr = targets.pop()
+    return q.Assign(targets, value)
+
 
 ##############################
 # COMPOUND CASES

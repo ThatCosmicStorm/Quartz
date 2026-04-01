@@ -1,1 +1,4 @@
-" HELLO WORLD " -> .strip -> .lower -> print
+string = s = " HELLO WORLD "
+lst = [s]
+lst[0] = " YOU'RE A DUMBASS "
+lst[0] -> .strip -> .lower -> print

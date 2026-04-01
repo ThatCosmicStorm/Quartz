@@ -137,6 +137,11 @@ def _match(stmt: q.Stmt) -> py.stmt:
     # For now, just return an expression statement
     if isinstance(stmt, q.ExprStmt):
         return py.Expr(_expr(stmt.expr))
+    if isinstance(stmt, q.Assign):
+        return py.Assign(
+            [_expr(trgt, _Ctx.STORE) for trgt in stmt.targets],
+            _expr(stmt.value),
+        )
     raise _TranspilerError
 
 
@@ -195,11 +200,13 @@ def _ternary_op(node: q.TernaryOp) -> py.IfExp:
 
 
 def _list(node: q.List) -> py.List:
-    return py.List([_expr(elt) for elt in node.elements], _ctx())
+    ctx: py.Load | py.Store | py.Del = _ctx()
+    return py.List([_expr(elt) for elt in node.elements], ctx)
 
 
 def _tuple(node: q.Tuple) -> py.Tuple:
-    return py.Tuple([_expr(elt) for elt in node.elements], _ctx())
+    ctx: py.Load | py.Store | py.Del = _ctx()
+    return py.Tuple([_expr(elt) for elt in node.elements], ctx)
 
 
 def _set(node: q.Set) -> py.Set:
@@ -226,18 +233,20 @@ def _keyword(node: q.Keyword) -> py.keyword:
 
 
 def _attribute(node: q.Attribute) -> py.Attribute:
+    ctx: py.Load | py.Store | py.Del = _ctx()
     return py.Attribute(
         _expr(node.value),
         node.attr,
-        _ctx(),
+        ctx,
     )
 
 
 def _subscript(node: q.Subscript) -> py.Subscript:
+    ctx: py.Load | py.Store | py.Del = _ctx()
     return py.Subscript(
         _expr(node.value),
         _expr(node.slice_),
-        _ctx(),
+        ctx,
     )
 
 
