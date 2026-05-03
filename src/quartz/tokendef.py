@@ -1,4 +1,4 @@
-"""Carries `Error`, `Tag`, and `Token`."""
+"""`Error`, `Tag`, and `Token` definitions."""
 
 ##############################
 # IMPORTS
@@ -97,7 +97,7 @@ class Tag(Enum):
 
 
 class Token(NamedTuple):
-    """The sole Quartz Token class."""
+    """A Quartz token."""
 
     tag: Tag
     tok: str
@@ -123,7 +123,7 @@ class Error(Exception):
     ) -> None:
         """Raise an Error."""
         pointer: str = " " * col
-        pointer = pointer[:-2] + "^"
+        pointer: str = pointer[:-2] + "^"
         super().__init__(
             dedent(
                 f"""\
@@ -135,8 +135,3 @@ class Error(Exception):
                 {dedent(message)}\n""",
             ),
         )
-
-
-##############################
-# END OF FILE
-##############################

@@ -2,3 +2,11 @@ string = s = " HELLO WORLD "
 lst = [s]
 lst[0] = " YOU'RE A DUMBASS "
 lst[0] -> .strip -> .lower -> print
+
+if string == "0"
+    print()
+    input("hello there")
+else if string == "1"
+    print("deez nuts")
+else
+    "hellooooo?" -> print

@@ -1,9 +1,5 @@
 #! /usr/bin/env python
-
-"""*The Quartz Interpreter*.
-
-Currently only displays the output of the lexer.
-"""
+"""*The interpreter for the Quartz programming language*."""
 
 ##############################
 # IMPORTS
@@ -14,9 +10,9 @@ from pathlib import Path
 from pprint import pprint
 from typing import TYPE_CHECKING, Literal
 
-import quartz.astcompile
-import quartz.lexer
-import quartz.parser
+from .astcompile import ASTCompile
+from .lexer import Lexer
+from .parser import Parser
 
 if TYPE_CHECKING:
     from types import CodeType
@@ -50,17 +46,17 @@ def _clear_terminal() -> None:
 def _quartz(program: str, filename: Path, *, debug: bool) -> None:
     if debug:
         print("File input:")
-        pprint(program)
-    tokens: list[Token] = quartz.lexer.main(program)
+        print(program)
+    tokens: list[Token] = Lexer(program).get_tokens()
     if debug:
         print("\n" + "Lexer:")
         pprint(tokens)
-    prog: Program = quartz.parser.main(tokens)
+    prog: Program = Parser(tokens).get_program()
     if debug:
         print("\n" + "Parser:")
         for stmt in prog.statements:
             pprint(stmt)
-    module: ast.Module = quartz.astcompile.main(prog)
+    module: ast.Module = ASTCompile(prog).get_module()
     if debug:
         print("\n" + "AST Compile:")
         print(ast.dump(module, indent=4))
@@ -109,8 +105,3 @@ def main(
         sys.exit(
             f"Error: File '{sys.argv[1]}' not found",
         )
-
-
-##############################
-# END OF FILE
-##############################

@@ -1,4 +1,4 @@
-"""*Carries all Quartz AST Nodes*."""
+"""*The AST for the Quartz programming language*."""
 
 ##############################
 # IMPORTS
@@ -45,10 +45,35 @@ class Assign(Stmt):
 
 
 @dataclass(frozen=True, slots=True)
+class Delete(Stmt):
+    """*Represents a `del` statement*."""
+
+    targets: list[Expr]
+
+
+@dataclass(frozen=True, slots=True)
 class ExprStmt(Stmt):
     """*Statement containing only a bare expression*."""
 
     expr: Expr
+
+
+@dataclass(frozen=True, slots=True)
+class If(Stmt):
+    """*An `if` statement*."""
+
+    test: Expr
+    body: list[Stmt]
+    orelse: list[Stmt]
+
+
+@dataclass(frozen=True, slots=True)
+class While(Stmt):
+    """*A `while` loop*."""
+
+    test: Expr
+    body: list[Stmt]
+    orelse: list[Stmt]
 
 
 @dataclass(frozen=True, slots=True)
@@ -182,8 +207,3 @@ class Ident(Expr):
     """*Identifier*."""
 
     name: str
-
-
-##############################
-# END OF FILE
-##############################

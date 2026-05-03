@@ -1,4 +1,7 @@
-# Formal Grammar
+# Working Grammar
+
+- The grammar for all *currently* implemented features of the Quartz programming language.
+- The goal is to have `working-grammar.md` get as close as possible—or simply match—`formal-grammar.md`.
 
 ## Syntax
 
@@ -23,14 +26,25 @@ program
 
 # ---- Statements ----
 statement
-    (expr | simple) stmt_end
+    ((expr | simple) stmt_end)
+    | compound
 
 simple
     assign
+    | delete
+
+compound
+    if
 
 # ---- Simple Cases ----
 assign
     expr ("=" expr)+
+delete
+    "del" expr {"," expr}
+
+# ---- Compound Cases ----
+if
+    "if" expr suite {"else if" expr suite} ["else" suite]
 
 # ---- Statement Parts ----
 call_parameter
@@ -42,6 +56,10 @@ pipe_stage
     ["."] postfix
 stmt_end
     NEWLINE
+
+# ---- Blocks ----
+suite
+    NEWLINE INDENT statement+ DEDENT
 
 # ---- Expressions ----
 expr

@@ -49,5 +49,4 @@ pip install -e .
 ## WORK IN PROGRESS
 
 - Pay attention to the `working-grammar.md` file, as it contains all the grammar for *currently* implemented features.
-  - Eventually, the goal is to have `working-grammar.md` *match* `formal-grammar.md`.
 - **Open issues on GitHub if there are any problems, ideas, suggestions, comments, etc.**

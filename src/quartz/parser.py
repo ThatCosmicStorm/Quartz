@@ -1,15 +1,17 @@
-"""*The Quartz Parser*."""
+"""*The parser for the Quartz programming language*."""
 
 ##############################
 # IMPORTS
 ##############################
 
-from collections.abc import Callable
-from typing import NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn
 
 import quartz.ast as q
 
 from .tokendef import Error, Tag, Token
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 ##############################
 # SET CONSTANTS
@@ -71,480 +73,472 @@ class _ParserError(Error):
 
 
 ##############################
-# STATE
+# MAIN CLASS
 ##############################
 
 
-class _State:
-    tokens: list[Token]
-    i: int = 0
-    token: Token
-    length: int
-    parse_statements: dict[str, Callable[[], q.Stmt]]
-    keywords: set[str]
-    primary_dict: dict[Tag, Callable[[], q.Constant]]
-    primary_dict_keys: set[Tag]
+class Parser:
+    """*The Quartz Parser*."""
 
+    def __init__(self, tokens: list[Token]) -> None:
+        """*Parse a list of Quartz tokens*.
 
-_self: _State = _State()
+        Args:
+            tokens (list[Token]): *List of Quartz tokens*
 
-##############################
-# HELPER FUNCTIONS
-##############################
+        """
+        self._i: int = 0
 
+        self._tokens: list[Token] = tokens
+        self._token: Token = self._tokens[self._i]
+        self._length: int = len(self._tokens)
 
-def _raise_error(message: str = "") -> NoReturn:
-    raise _ParserError(
-        _self.token.ln,
-        _self.token.col,
-        _self.token.line,
-        message,
-    )
+        self._parse_statements: dict[str, Callable[[], q.Stmt]] = {
+            "del": self._del,
+            "if": self._if,
+            # "while": self._while,
+            # "until": self._while,
+        }
+        self._keywords: set[str] = set(self._parse_statements.keys())
 
+        self._simple_statements: set[Any] = {
+            q.Assign,
+            q.ExprStmt,
+        }
 
-def _next(num: int = 1) -> Token:
-    if _self.i + num >= _self.length:
-        _raise_error(f"No token found at index #{_self.i + num}")
-    past_token: Token = _self.token
-    _self.i += num
-    _self.token: Token = _self.tokens[_self.i]
-    return past_token
+        self._primary_dict: dict[Tag, Callable[[], q.Constant]] = {
+            Tag.INTEGER: self._integer,
+            Tag.FALSE: self._false,
+            Tag.FLOAT: self._float,
+            Tag.NONE: self._none,
+            Tag.STRING: self._string,
+            Tag.TRUE: self._true,
+            Tag.ELLIPSIS: self._ellipsis,
+        }
+        self._primary_dict_keys: set[Tag] = set(self._primary_dict.keys())
 
+        self._program: q.Program = q.Program(self._statements())
 
-def _check(*types: str | Tag, ahead: int = 0) -> bool:
-    i: int = _self.i + ahead
-    if_ahead: bool = i < _self.length
-    in_: bool = any(
-        typ in {_self.tokens[i].tag, _self.tokens[i].tok} for typ in types
-    )
-    return if_ahead and in_
+    ##########################
+    # Helper Functions
+    ##########################
 
-
-def _in(set_: set[Tag] | set[str], ahead: int = 0) -> bool:
-    i: int = _self.i + ahead
-    if_ahead: bool = i < _self.length
-    tag: bool = _self.tokens[i].tag in set_
-    tok: bool = _self.tokens[i].tok in set_
-    return if_ahead and (tag or tok)
-
-
-def _match(type_: str | Tag) -> Token | None:
-    if type_ in {_self.token.tag, _self.token.tok}:
-        return _next()
-    return None
-
-
-def _expect(type_: str | Tag) -> Token:
-    if type_ in {_self.token.tok, _self.token.tag}:
-        return _next()
-    return _raise_error(
-        f"Expected {type_}, got {_self.token.tok or _self.token.tag}",
-    )
-
-
-##############################
-# MAIN FUNCTION
-##############################
-
-
-def main(tokens: list[Token]) -> q.Program:
-    """*Parse a list of Quartz tokens*.
-
-    Args:
-        tokens (list[Token]): *Quartz `Token`'s*
-        debug (bool): *If True, prints each statement as it's parsed*
-
-    Returns:
-        Node: *Every statement and expression*
-
-    """
-    _self.tokens: list[Token] = tokens
-    _self.token: Token = _self.tokens[_self.i]
-    _self.length: int = len(_self.tokens)
-
-    # _self.parse_statements: dict[str, Callable[[], Node]] = {
-    #     "assert": _assert,
-    #     "import": _basic_import,
-    #     "break": _break,
-    #     "continue": _continue,
-    #     "delete": _del,
-    #     "pass": _pass,
-    #     "raise": _raise,
-    #     "<<<": _return,
-    #     "from": _selective_import,
-    #     "type": _type_alias,
-    #     "yield": _yield,
-    #     "pub": _public,
-    #     "@": _decorator,
-    #     "for": _for,
-    #     "fn": _function_definition,
-    #     "if": _if,
-    #     "match": _match,
-    #     "struct": _struct,
-    #     "while": _while,
-    #     "until": _while,
-    # }
-    # _self.keywords: set[str] = set(_self.parse_statements.keys())
-
-    _self.primary_dict: dict[Tag, Callable[[], q.Constant]] = {
-        Tag.INTEGER: _integer,
-        Tag.FALSE: _false,
-        Tag.FLOAT: _float,
-        Tag.NONE: _none,
-        Tag.STRING: _string,
-        Tag.TRUE: _true,
-        Tag.ELLIPSIS: _ellipsis,
-    }
-    _self.primary_dict_keys: set[Tag] = set(_self.primary_dict.keys())
-
-    statements: list[q.Stmt] = []
-    while not _check(Tag.EOF):
-        statements.append(_stmt())
-    return q.Program(statements)
-
-
-##############################
-# STATEMENTS
-##############################
-
-
-def _stmt() -> q.Stmt:
-    # For now, we're just focusing on expressions.
-    expr: q.Expr = _expr()
-    stmt: q.Stmt
-    if _match(Tag.EQUAL):  # noqa: SIM108
-        stmt = _assign(expr)
-    else:
-        stmt = q.ExprStmt(expr)
-    _expect(Tag.NEWLINE)
-    return stmt
-
-
-##############################
-# SIMPLE CASES
-##############################
-
-
-def _assign(first: q.Expr) -> q.Assign:
-    targets: list[q.Expr] = [first, _expr()]
-    while _match(Tag.EQUAL):
-        targets.append(_expr())
-    value: q.Expr = targets.pop()
-    return q.Assign(targets, value)
-
-
-##############################
-# COMPOUND CASES
-##############################
-
-##############################
-# STATEMENT PARTS
-##############################
-
-
-def _call_parameter() -> q.Expr:
-    if _check(Tag.IDENT) and _check(Tag.EQUAL, ahead=1):
-        return q.Keyword(_next(2).tok, _expr())
-    return _expr()
-
-
-def _call_params() -> tuple[list[q.Expr], list[q.Keyword]]:
-    lst: list[q.Expr] = [_call_parameter()]
-    while _match(Tag.COMMA) and not _check(Tag.R_PAREN):
-        lst.append(_call_parameter())
-    _match(Tag.COMMA)
-    args: list[q.Expr] = [arg for arg in lst if not isinstance(arg, q.Keyword)]
-    keywords: list[q.Keyword] = [
-        arg for arg in lst if isinstance(arg, q.Keyword)
-    ]
-    return (args, keywords)
-
-
-##############################
-# BLOCKS
-##############################
-
-##############################
-# EXPRESSIONS
-##############################
-
-
-def _expr() -> q.Expr:
-    expr: q.Expr = _ternary()
-    if not _check(Tag.ARROW):
-        return expr
-    return _pipeline(expr)
-
-
-def _pipeline(first: q.Expr) -> q.Expr:
-    stage: q.Expr = first
-    while _match(Tag.ARROW):
-        args: list[q.Expr] = []
-        if _match(Tag.PERIOD):
-            stage = q.Attribute(stage, _expect(Tag.IDENT).tok)
-            pf: q.Expr = _postfix(stage)
-        else:
-            args.append(stage)
-            pf: q.Expr = _postfix()
-        kws: list[q.Keyword] = []
-        if isinstance(pf, q.Call):
-            args.extend(arg for arg in pf.args)
-            kws: list[q.Keyword] = pf.keywords
-        stage = q.Call(
-            pf.func if isinstance(pf, q.Call) else pf,
-            args=args,
-            keywords=kws,
+    def _raise_error(self, message: str = "") -> NoReturn:
+        raise _ParserError(
+            self._token.ln,
+            self._token.col,
+            self._token.line,
+            message,
         )
-    return stage
 
+    def _next(self, num: int = 1) -> Token:
+        if (next_i := self._i + num) >= self._length:
+            self._raise_error(f"No token found at index #{next_i}")
+        past_token: Token = self._token
+        self._i: int = next_i
+        self._token: Token = self._tokens[self._i]
+        return past_token
 
-def _ternary() -> q.Expr:
-    body: q.Expr = _disjunction()
-    if not _check("if"):
-        return body
-    _expect("if")
-    test: q.Expr = _expr()
-    _expect("else")
-    orelse: q.Expr = _expr()
-    return q.TernaryOp(body, test, orelse)
+    def _check(self, *types: str | Tag, ahead: int = 0) -> bool:
+        i: int = self._i + ahead
+        if_ahead: bool = i < self._length
+        in_: bool = any(
+            typ in {self._tokens[i].tag, self._tokens[i].tok} for typ in types
+        )
+        return if_ahead and in_
 
+    def _in(self, set_: set[Tag] | set[str], ahead: int = 0) -> bool:
+        i: int = self._i + ahead
+        if_ahead: bool = i < self._length
+        tag: bool = self._tokens[i].tag in set_
+        tok: bool = self._tokens[i].tok in set_
+        return if_ahead and (tag or tok)
 
-def _disjunction() -> q.Expr:
-    expr: q.Expr = _conjunction()
-    if not _check(Tag.OR):
-        return expr
-    _expect(Tag.OR)
-    values: list[q.Expr] = [expr, _conjunction()]
-    while _match(Tag.OR):
-        values.append(_conjunction())
-    return q.BoolOp(Tag.OR, values)
+    def _match(self, type_: str | Tag) -> Token | None:
+        if type_ in {self._token.tag, self._token.tok}:
+            return self._next()
+        return None
 
+    def _expect(self, type_: str | Tag) -> Token:
+        if type_ in {self._token.tok, self._token.tag}:
+            return self._next()
+        return self._raise_error(
+            f"Expected {type_}, got {self._token.tok or self._token.tag}",
+        )
 
-def _conjunction() -> q.Expr:
-    expr: q.Expr = _inversion()
-    if not _check(Tag.AND):
-        return expr
-    _expect(Tag.AND)
-    values: list[q.Expr] = [expr, _inversion()]
-    while _match(Tag.AND):
-        values.append(_inversion())
-    return q.BoolOp(Tag.AND, values)
+    ##########################
+    # Main Getter Function
+    ##########################
 
+    def get_program(self) -> q.Program:
+        """*Return the output of the parser*.
 
-def _inversion() -> q.Expr:
-    if not _check(Tag.NOT):
-        return _comparison()
-    return q.UnaryOp(_next().tag, _inversion())
+        Returns:
+            q.Program: *Parser output*
 
+        """
+        return self._program
 
-def _comparison() -> q.Expr:
-    expr: q.Expr = _bitwise_or()
-    if not _in(COMPARISON_OPS):
-        return expr
-    ops: list[Tag] = [_next().tag]
-    comparators: list[q.Expr] = [_bitwise_or()]
-    while _in(COMPARISON_OPS):
-        ops.append(_next().tag)
-        comparators.append(_bitwise_or())
-    return q.Comparison(expr, ops, comparators)
+    ##########################
+    # Statements
+    ##########################
 
+    def _statements(self) -> list[q.Stmt]:
+        statements: list[q.Stmt] = []
+        while not self._check(Tag.EOF):
+            statements.append(self._stmt())
+        return statements
 
-def _bitwise_or() -> q.Expr:
-    expr: q.Expr = _bitwise_xor()
-    while _check(Tag.PIPE):
-        expr = q.BinaryOp(_next().tag, expr, _bitwise_xor())
-    return expr
+    def _stmt(self) -> q.Stmt:
+        stmt: q.Stmt = self._match_stmt()
+        if type(stmt) in self._simple_statements:
+            self._expect(Tag.NEWLINE)
+        return stmt
 
+    def _match_stmt(self) -> q.Stmt:
+        if self._in(self._keywords):
+            return self._parse_statements[self._token.tok]()
+        expr: q.Expr = self._expr()
+        if self._match(Tag.EQUAL):
+            return self._assign(expr)
+        return q.ExprStmt(expr)
 
-def _bitwise_xor() -> q.Expr:
-    expr: q.Expr = _bitwise_and()
-    while _check(Tag.TILDE):
-        expr = q.BinaryOp(_next().tag, expr, _bitwise_and())
-    return expr
+    ##############################
+    # SIMPLE CASES
+    ##############################
 
+    def _assign(self, first: q.Expr) -> q.Assign:
+        targets: list[q.Expr] = [first, self._expr()]
+        while self._match(Tag.EQUAL):
+            targets.append(self._expr())
+        value: q.Expr = targets.pop()
+        return q.Assign(targets, value)
 
-def _bitwise_and() -> q.Expr:
-    expr: q.Expr = _bitwise_shift()
-    while _check(Tag.AMPERSAND):
-        expr = q.BinaryOp(_next().tag, expr, _bitwise_shift())
-    return expr
+    def _del(self) -> q.Delete:
+        self._expect("del")
+        targets: list[q.Expr] = [self._expr()]
+        while self._match(Tag.COMMA):
+            targets.append(self._expr())
+        return q.Delete(targets)
 
+    ##############################
+    # COMPOUND CASES
+    ##############################
 
-def _bitwise_shift() -> q.Expr:
-    expr: q.Expr = _sum()
-    while _check(Tag.L_ANGLE_L_ANGLE, Tag.R_ANGLE_R_ANGLE):
-        expr = q.BinaryOp(_next().tag, expr, _sum())
-    return expr
+    def _if(self) -> q.If:
+        self._expect("if")
+        test: q.Expr = self._expr()
+        body: list[q.Stmt] = self._suite()
+        orelse: list[q.Stmt] = []
+        while self._check("else") and self._check("if", ahead=1):
+            self._next(2)
+            orelse: list[q.Stmt] = [self._if()]
+        if self._match("else"):
+            orelse: list[q.Stmt] = self._suite()
+        return q.If(test, body, orelse)
 
+    # def _while(self) -> q.While:
+    #     word: str = self._next().tok
+    #     test: q.Expr = self._expr()
+    #     body: list[q.Stmt] = self._suite()
+    #     orelse: list[q.Stmt] = []
+    #     if self._match("else"):
+    #         orelse: list[q.Stmt] = self._suite()
+    #     return q.While(
+    #         test if word == "while" else q.UnaryOp(Tag.NOT, test),
+    #         body,
+    #         orelse,
+    #     )
 
-def _sum() -> q.Expr:
-    expr: q.Expr = _term()
-    while _check(Tag.PLUS, Tag.MINUS):
-        expr = q.BinaryOp(_next().tag, expr, _term())
-    return expr
+    ##############################
+    # STATEMENT PARTS
+    ##############################
 
+    def _call_parameter(self) -> q.Expr:
+        if self._check(Tag.IDENT) and self._check(Tag.EQUAL, ahead=1):
+            return q.Keyword(self._next(2).tok, self._expr())
+        return self._expr()
 
-def _term() -> q.Expr:
-    expr: q.Expr = _factor()
-    while _check(Tag.ASTERISK, Tag.SLASH, Tag.SLASH_SLASH, Tag.PERCENT):
-        expr = q.BinaryOp(_next().tag, expr, _factor())
-    return expr
+    def _call_params(self) -> tuple[list[q.Expr], list[q.Keyword]]:
+        lst: list[q.Expr] = [self._call_parameter()]
+        while self._match(Tag.COMMA) and not self._check(Tag.R_PAREN):
+            lst.append(self._call_parameter())
+        self._match(Tag.COMMA)
+        args: list[q.Expr] = [
+            arg for arg in lst if not isinstance(arg, q.Keyword)
+        ]
+        keywords: list[q.Keyword] = [
+            arg for arg in lst if isinstance(arg, q.Keyword)
+        ]
+        return (args, keywords)
 
+    ##############################
+    # BLOCKS
+    ##############################
 
-def _factor() -> q.Expr:
-    if not _check(Tag.PLUS, Tag.MINUS, Tag.TILDE):
-        return _power()
-    return q.UnaryOp(_next().tag, _factor())
+    def _suite(self) -> list[q.Stmt]:
+        self._expect(Tag.NEWLINE)
+        self._expect(Tag.INDENT)
+        stmts: list[q.Stmt] = [self._stmt()]
+        while not self._check(Tag.DEDENT):
+            stmts.append(self._stmt())
+        self._expect(Tag.DEDENT)
+        return stmts
 
+    ##############################
+    # EXPRESSIONS
+    ##############################
 
-def _power() -> q.Expr:
-    expr: q.Expr = _postfix()
-    while _check(Tag.CARET):
-        expr = q.BinaryOp(_next().tag, expr, _factor())
-    return expr
+    def _expr(self) -> q.Expr:
+        expr: q.Expr = self._ternary()
+        if not self._check(Tag.ARROW):
+            return expr
+        return self._pipeline(expr)
 
-
-def _postfix(first: q.Expr | None = None) -> q.Expr:
-    expr: q.Expr = first or _primary()
-    while _check(Tag.PERIOD, Tag.L_PAREN, Tag.L_BRACKET):
-        if _match(Tag.PERIOD):
-            expr = q.Attribute(expr, _expect(Tag.IDENT).tok)
-        elif _match(Tag.L_PAREN):
-            if _match(Tag.R_PAREN):
-                expr = q.Call(expr)
+    def _pipeline(self, first: q.Expr) -> q.Expr:
+        stage: q.Expr = first
+        while self._match(Tag.ARROW):
+            args: list[q.Expr] = []
+            if self._match(Tag.PERIOD):
+                stage = q.Attribute(stage, self._expect(Tag.IDENT).tok)
+                pf: q.Expr = self._postfix(stage)
             else:
-                expr = q.Call(expr, *_call_params())
-                _expect(Tag.R_PAREN)
-        elif _match(Tag.L_BRACKET):
-            expr = q.Subscript(expr, _slice())
-            _expect(Tag.R_BRACKET)
-    return expr
+                args.append(stage)
+                pf: q.Expr = self._postfix()
+            kws: list[q.Keyword] = []
+            if isinstance(pf, q.Call):
+                args.extend(arg for arg in pf.args)
+                kws: list[q.Keyword] = pf.keywords
+            stage = q.Call(
+                pf.func if isinstance(pf, q.Call) else pf,
+                args=args,
+                keywords=kws,
+            )
+        return stage
 
+    def _ternary(self) -> q.Expr:
+        body: q.Expr = self._disjunction()
+        if not self._check("if"):
+            return body
+        self._expect("if")
+        test: q.Expr = self._expr()
+        self._expect("else")
+        orelse: q.Expr = self._expr()
+        return q.TernaryOp(body, test, orelse)
 
-def _slice() -> q.Expr:
-    lower: q.Expr | None = None
-    upper: q.Expr | None = None
-    step: q.Expr | None = None
-    if not _check(Tag.COLON):
-        lower: q.Expr = _expr()
-        expr: q.Expr = lower
-    if not _check(Tag.COLON):
+    def _disjunction(self) -> q.Expr:
+        expr: q.Expr = self._conjunction()
+        if not self._check(Tag.OR):
+            return expr
+        self._expect(Tag.OR)
+        values: list[q.Expr] = [expr, self._conjunction()]
+        while self._match(Tag.OR):
+            values.append(self._conjunction())
+        return q.BoolOp(Tag.OR, values)
+
+    def _conjunction(self) -> q.Expr:
+        expr: q.Expr = self._inversion()
+        if not self._check(Tag.AND):
+            return expr
+        self._expect(Tag.AND)
+        values: list[q.Expr] = [expr, self._inversion()]
+        while self._match(Tag.AND):
+            values.append(self._inversion())
+        return q.BoolOp(Tag.AND, values)
+
+    def _inversion(self) -> q.Expr:
+        if not self._check(Tag.NOT):
+            return self._comparison()
+        return q.UnaryOp(self._next().tag, self._inversion())
+
+    def _comparison(self) -> q.Expr:
+        expr: q.Expr = self._bitwise_or()
+        if not self._in(COMPARISON_OPS):
+            return expr
+        ops: list[Tag] = [self._next().tag]
+        comparators: list[q.Expr] = [self._bitwise_or()]
+        while self._in(COMPARISON_OPS):
+            ops.append(self._next().tag)
+            comparators.append(self._bitwise_or())
+        return q.Comparison(expr, ops, comparators)
+
+    def _bitwise_or(self) -> q.Expr:
+        expr: q.Expr = self._bitwise_xor()
+        while self._check(Tag.PIPE):
+            expr = q.BinaryOp(self._next().tag, expr, self._bitwise_xor())
         return expr
-    _expect(Tag.COLON)
-    if not _check(Tag.COMMA, Tag.COLON, Tag.R_BRACKET):
-        upper: q.Expr = _expr()
-    if _match(Tag.COLON):  # noqa: SIM102
-        if not (_check(Tag.COMMA, Tag.R_BRACKET)):
-            step: q.Expr = _expr()
-    return q.Slice(lower, upper, step)
 
-
-def _primary() -> q.Expr:  # noqa: PLR0911
-    if _self.token.tag in _self.primary_dict:
-        return _self.primary_dict[_self.token.tag]()
-    if _check(Tag.IDENT):
-        return q.Ident(_next().tok)
-    if _match(Tag.L_PAREN):
-        return _tuple()
-    if _match(Tag.L_BRACKET):
-        return _list()
-    if _match(Tag.DOLLAR_L_BRACE):
-        return _set()
-    if _match(Tag.PERCENT_L_BRACE):
-        return _dict()
-    return _raise_error("UnknownPrimary")
-
-
-def _integer() -> q.Constant:
-    return q.Constant(int(_next().tok))
-
-
-def _float() -> q.Constant:
-    return q.Constant(float(_next().tok))
-
-
-def _string() -> q.Constant:
-    return q.Constant(_next().tok)
-
-
-def _true() -> q.Constant:
-    _next()
-    return q.Constant(value=True)
-
-
-def _false() -> q.Constant:
-    _next()
-    return q.Constant(value=False)
-
-
-def _none() -> q.Constant:
-    _next()
-    return q.Constant()
-
-
-def _ellipsis() -> q.Constant:
-    return q.Constant(Ellipsis)
-
-
-def _list() -> q.List:
-    if _match(Tag.R_BRACKET):
-        return q.List()
-    lst: list[q.Expr] = [_expr()]
-    while _match(Tag.COMMA) and not _check(Tag.R_BRACKET):
-        lst.append(_expr())
-    _match(Tag.COMMA)
-    _expect(Tag.R_BRACKET)
-    return q.List(lst)
-
-
-def _tuple() -> q.Expr:
-    if _match(Tag.R_PAREN):
-        return q.Tuple()
-    expr: q.Expr = _expr()
-    if _match(Tag.R_PAREN):
+    def _bitwise_xor(self) -> q.Expr:
+        expr: q.Expr = self._bitwise_and()
+        while self._check(Tag.TILDE):
+            expr = q.BinaryOp(self._next().tag, expr, self._bitwise_and())
         return expr
-    lst: list[q.Expr] = [expr]
-    while _match(Tag.COMMA) and not _check(Tag.R_PAREN):
-        lst.append(_expr())
-    _match(Tag.COMMA)
-    _expect(Tag.R_PAREN)
-    return q.Tuple(lst)
 
+    def _bitwise_and(self) -> q.Expr:
+        expr: q.Expr = self._bitwise_shift()
+        while self._check(Tag.AMPERSAND):
+            expr = q.BinaryOp(self._next().tag, expr, self._bitwise_shift())
+        return expr
 
-def _set() -> q.Set:
-    if _match(Tag.R_BRACE):
-        return q.Set()
-    lst: list[q.Expr] = [_expr()]
-    while _match(Tag.COMMA) and not _check(Tag.R_BRACE):
-        lst.append(_expr())
-    _match(Tag.COMMA)
-    _expect(Tag.R_BRACE)
-    return q.Set(lst)
+    def _bitwise_shift(self) -> q.Expr:
+        expr: q.Expr = self._sum()
+        while self._check(Tag.L_ANGLE_L_ANGLE, Tag.R_ANGLE_R_ANGLE):
+            expr = q.BinaryOp(self._next().tag, expr, self._sum())
+        return expr
 
+    def _sum(self) -> q.Expr:
+        expr: q.Expr = self._term()
+        while self._check(Tag.PLUS, Tag.MINUS):
+            expr = q.BinaryOp(self._next().tag, expr, self._term())
+        return expr
 
-def _dict() -> q.Dict:
-    if _match(Tag.R_BRACE):
-        return q.Dict()
-    lst: list[tuple[q.Expr, q.Expr]] = []
-    key: q.Expr = _expr()
-    _expect(Tag.COLON)
-    lst.append((key, _expr()))
-    while _match(Tag.COMMA) and not _check(Tag.R_BRACE):
-        key: q.Expr = _expr()
-        _expect(Tag.COLON)
-        lst.append((key, _expr()))
-    _match(Tag.COMMA)
-    _expect(Tag.R_BRACE)
-    return q.Dict([pair[0] for pair in lst], [pair[1] for pair in lst])
+    def _term(self) -> q.Expr:
+        expr: q.Expr = self._factor()
+        while self._check(
+            Tag.ASTERISK,
+            Tag.SLASH,
+            Tag.SLASH_SLASH,
+            Tag.PERCENT,
+        ):
+            expr = q.BinaryOp(self._next().tag, expr, self._factor())
+        return expr
 
+    def _factor(self) -> q.Expr:
+        if not self._check(Tag.PLUS, Tag.MINUS, Tag.TILDE):
+            return self._power()
+        return q.UnaryOp(self._next().tag, self._factor())
 
-def _type() -> q.Expr:
-    typ: q.Expr = _postfix()
-    while _match(Tag.PIPE):
-        typ: q.BinaryOp = q.BinaryOp(Tag.PIPE, typ, _postfix())
-    return typ
+    def _power(self) -> q.Expr:
+        expr: q.Expr = self._postfix()
+        while self._check(Tag.CARET):
+            expr = q.BinaryOp(self._next().tag, expr, self._factor())
+        return expr
 
+    def _postfix(self, first: q.Expr | None = None) -> q.Expr:
+        expr: q.Expr = first or self._primary()
+        while self._check(Tag.PERIOD, Tag.L_PAREN, Tag.L_BRACKET):
+            if self._match(Tag.PERIOD):
+                expr = q.Attribute(expr, self._expect(Tag.IDENT).tok)
+            elif self._match(Tag.L_PAREN):
+                if self._match(Tag.R_PAREN):
+                    expr = q.Call(expr)
+                else:
+                    expr = q.Call(expr, *self._call_params())
+                    self._expect(Tag.R_PAREN)
+            elif self._match(Tag.L_BRACKET):
+                expr = q.Subscript(expr, self._slice())
+                self._expect(Tag.R_BRACKET)
+        return expr
 
-##############################
-# END OF FILE
-##############################
+    def _slice(self) -> q.Expr:
+        lower: q.Expr | None = None
+        upper: q.Expr | None = None
+        step: q.Expr | None = None
+        if not self._check(Tag.COLON):
+            lower: q.Expr = self._expr()
+            expr: q.Expr = lower
+        if not self._check(Tag.COLON):
+            return expr
+        self._expect(Tag.COLON)
+        if not self._check(Tag.COMMA, Tag.COLON, Tag.R_BRACKET):
+            upper: q.Expr = self._expr()
+        if self._match(Tag.COLON):  # noqa: SIM102
+            if not (self._check(Tag.COMMA, Tag.R_BRACKET)):
+                step: q.Expr = self._expr()
+        return q.Slice(lower, upper, step)
+
+    def _primary(self) -> q.Expr:  # noqa: PLR0911
+        if self._token.tag in self._primary_dict:
+            return self._primary_dict[self._token.tag]()
+        if self._check(Tag.IDENT):
+            return q.Ident(self._next().tok)
+        if self._match(Tag.L_PAREN):
+            return self._tuple()
+        if self._match(Tag.L_BRACKET):
+            return self._list()
+        if self._match(Tag.DOLLAR_L_BRACE):
+            return self._set()
+        if self._match(Tag.PERCENT_L_BRACE):
+            return self._dict()
+        return self._raise_error(
+            f"UnknownPrimary: {self._token.tag} {self._token.tok}",
+        )
+
+    def _integer(self) -> q.Constant:
+        return q.Constant(int(self._next().tok))
+
+    def _float(self) -> q.Constant:
+        return q.Constant(float(self._next().tok))
+
+    def _string(self) -> q.Constant:
+        return q.Constant(self._next().tok)
+
+    def _true(self) -> q.Constant:
+        self._next()
+        return q.Constant(value=True)
+
+    def _false(self) -> q.Constant:
+        self._next()
+        return q.Constant(value=False)
+
+    def _none(self) -> q.Constant:
+        self._next()
+        return q.Constant()
+
+    def _ellipsis(self) -> q.Constant:
+        self._next()
+        return q.Constant(Ellipsis)
+
+    def _list(self) -> q.List:
+        if self._match(Tag.R_BRACKET):
+            return q.List()
+        lst: list[q.Expr] = [self._expr()]
+        while self._match(Tag.COMMA) and not self._check(Tag.R_BRACKET):
+            lst.append(self._expr())
+        self._match(Tag.COMMA)
+        self._expect(Tag.R_BRACKET)
+        return q.List(lst)
+
+    def _tuple(self) -> q.Expr:
+        if self._match(Tag.R_PAREN):
+            return q.Tuple()
+        expr: q.Expr = self._expr()
+        if self._match(Tag.R_PAREN):
+            return expr
+        lst: list[q.Expr] = [expr]
+        while self._match(Tag.COMMA) and not self._check(Tag.R_PAREN):
+            lst.append(self._expr())
+        self._match(Tag.COMMA)
+        self._expect(Tag.R_PAREN)
+        return q.Tuple(lst)
+
+    def _set(self) -> q.Set:
+        if self._match(Tag.R_BRACE):
+            return q.Set()
+        lst: list[q.Expr] = [self._expr()]
+        while self._match(Tag.COMMA) and not self._check(Tag.R_BRACE):
+            lst.append(self._expr())
+        self._match(Tag.COMMA)
+        self._expect(Tag.R_BRACE)
+        return q.Set(lst)
+
+    def _dict(self) -> q.Dict:
+        if self._match(Tag.R_BRACE):
+            return q.Dict()
+        lst: list[tuple[q.Expr, q.Expr]] = []
+        key: q.Expr = self._expr()
+        self._expect(Tag.COLON)
+        lst.append((key, self._expr()))
+        while self._match(Tag.COMMA) and not self._check(Tag.R_BRACE):
+            key: q.Expr = self._expr()
+            self._expect(Tag.COLON)
+            lst.append((key, self._expr()))
+        self._match(Tag.COMMA)
+        self._expect(Tag.R_BRACE)
+        return q.Dict([pair[0] for pair in lst], [pair[1] for pair in lst])
+
+    def _type(self) -> q.Expr:
+        typ: q.Expr = self._postfix()
+        while self._match(Tag.PIPE):
+            typ: q.BinaryOp = q.BinaryOp(Tag.PIPE, typ, self._postfix())
+        return typ

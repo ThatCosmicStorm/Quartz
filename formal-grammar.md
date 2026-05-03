@@ -1,5 +1,9 @@
 # Formal Grammar
 
+- The grammar for the Quartz programming language.
+- Reminder: `working-grammar.md` contains the grammar for all *currently* implemented features.
+- This file, `formal-grammar.md`, is the plan/goal.
+
 ## Syntax
 
 | Symbol | Definition |

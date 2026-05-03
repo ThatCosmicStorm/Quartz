@@ -1,17 +1,18 @@
-"""*Compiles a Python AST from the Quartz AST*."""
+"""*The Python AST compiler for the Quartz programming language*."""
 
 ##############################
 # IMPORTS
 ##############################
 
 import ast as py
-from collections.abc import Callable
-from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import quartz.ast as q
 
 from .tokendef import Error, Tag
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 ##############################
 # SET CONSTANTS
@@ -62,197 +63,187 @@ class _TranspilerError(Error):
 
 
 ##############################
-# STATE
+# MAIN CLASS
 ##############################
 
 
-class _Ctx(Enum):
-    LOAD = py.Load
-    STORE = py.Store
-    DEL = py.Del
+class ASTCompile:
+    """The Quartz AST Compiler."""
 
+    def __init__(self, program: q.Program) -> None:
+        """*Compiles Python AST from Quartz `Node`'s*.
 
-class _State:
-    expr_nodes: dict[Any, Callable[[Any], Any]]
-    ctx: _Ctx = _Ctx.LOAD
+        Args:
+            program (Program): *A Quartz `Program`*
 
+        Returns:
+            Node: *Every statement and expression*
 
-_self: _State = _State()
+        """
+        self._context: py.expr_context = py.Load()
+        self._expr_nodes: dict[Any, Callable[[Any], Any]] = {
+            q.Constant: self._constant,
+            q.Ident: self._name,
+            q.BinaryOp: self._binary_op,
+            q.UnaryOp: self._unary_op,
+            q.BoolOp: self._bool_op,
+            q.Comparison: self._comparison,
+            q.TernaryOp: self._ternary_op,
+            q.List: self._list,
+            q.Tuple: self._tuple,
+            q.Set: self._set,
+            q.Dict: self._dict,
+            q.Call: self._call,
+            q.Keyword: self._keyword,
+            q.Attribute: self._attribute,
+            q.Subscript: self._subscript,
+            q.Slice: self._slice,
+        }
+        statements: list[py.stmt] = [
+            self._stmt(node) for node in program.statements
+        ]
+        self._module: py.Module = py.Module(body=statements, type_ignores=[])
 
-##############################
-# HELPER FUNCTIONS
-##############################
+    ##########################
+    # Helper Functions
+    ##########################
 
+    def _ctx(self) -> py.expr_context:
+        return self._context
 
-def _ctx() -> py.Load | py.Store | py.Del:
-    return _self.ctx.value()
+    ##########################
+    # Main Getter Function
+    ##########################
 
+    def get_module(self) -> py.Module:
+        """*Return the output of the AST compiler*.
 
-# help wanted... :(
+        Returns:
+            py.Module: *AST compiler output*.
 
+        """
+        return self._module
 
-##############################
-# MAIN FUNCTION
-##############################
+    ##########################
+    # Match Functions
+    ##########################
 
+    def _stmt(self, stmt: q.Stmt) -> py.stmt:
+        if isinstance(stmt, q.ExprStmt):
+            return py.Expr(self._expr(stmt.expr))
+        if isinstance(stmt, q.Assign):
+            return py.Assign(
+                [self._expr(trgt, py.Store()) for trgt in stmt.targets],
+                self._expr(stmt.value),
+            )
+        if isinstance(stmt, q.Delete):
+            return py.Delete(
+                [self._expr(trgt, py.Del()) for trgt in stmt.targets],
+            )
+        if isinstance(stmt, q.If):
+            return py.If(
+                test=self._expr(stmt.test),
+                body=[self._stmt(sttmnt) for sttmnt in stmt.body],
+                orelse=[self._stmt(sttmnt) for sttmnt in stmt.orelse],
+            )
+        raise _TranspilerError
 
-def main(program: q.Program) -> py.Module:
-    """*Compiles py Python AST from Quartz `Node`s*.
+    def _expr(
+        self,
+        expr: q.Expr,
+        ctx: py.expr_context | None = None,
+    ) -> py.expr:
+        self._context: py.expr_context = ctx or py.Load()
+        for node, func in self._expr_nodes.items():
+            if isinstance(expr, node):
+                return func(expr)
+        raise _TranspilerError
 
-    Args:
-        program (Program): *A Quartz `Program`*
+    def _constant(self, node: q.Constant) -> py.Constant:
+        return py.Constant(node.value)
 
-    Returns:
-        Node: *Every statement and expression*
+    def _name(self, node: q.Ident) -> py.Name:
+        return py.Name(node.name, self._ctx())
 
-    """
-    _self.expr_nodes: dict[Any, Callable[[Any], Any]] = {
-        q.Constant: _constant,
-        q.Ident: _name,
-        q.BinaryOp: _binary_op,
-        q.UnaryOp: _unary_op,
-        q.BoolOp: _bool_op,
-        q.Comparison: _comparison,
-        q.TernaryOp: _ternary_op,
-        q.List: _list,
-        q.Tuple: _tuple,
-        q.Set: _set,
-        q.Dict: _dict,
-        q.Call: _call,
-        q.Keyword: _keyword,
-        q.Attribute: _attribute,
-        q.Subscript: _subscript,
-        q.Slice: _slice,
-    }
-    statements: list[py.stmt] = [_match(node) for node in program.statements]
-    return py.Module(body=statements, type_ignores=[])
-
-
-##############################
-# MATCH FUNCTIONS
-##############################
-
-
-def _match(stmt: q.Stmt) -> py.stmt:
-    # For now, just return an expression statement
-    if isinstance(stmt, q.ExprStmt):
-        return py.Expr(_expr(stmt.expr))
-    if isinstance(stmt, q.Assign):
-        return py.Assign(
-            [_expr(trgt, _Ctx.STORE) for trgt in stmt.targets],
-            _expr(stmt.value),
+    def _bool_op(self, node: q.BoolOp) -> py.BoolOp:
+        return py.BoolOp(
+            op=(py.Or if node.op == Tag.OR else py.And)(),
+            values=[self._expr(value) for value in node.values],
         )
-    raise _TranspilerError
 
+    def _binary_op(self, node: q.BinaryOp) -> py.BinOp:
+        return py.BinOp(
+            left=self._expr(node.left),
+            op=BINARY_OPERATORS[node.op](),
+            right=self._expr(node.right),
+        )
 
-def _expr(expr: q.Expr, ctx: _Ctx | None = None) -> py.expr:
-    _self.ctx: _Ctx = ctx or _Ctx.LOAD
-    for node, func in _self.expr_nodes.items():
-        if isinstance(expr, node):
-            return func(expr)
-    raise _TranspilerError
+    def _unary_op(self, node: q.UnaryOp) -> py.UnaryOp:
+        return py.UnaryOp(
+            op=UNARY_OPERATORS[node.op](),
+            operand=self._expr(node.operand),
+        )
 
+    def _comparison(self, node: q.Comparison) -> py.Compare:
+        return py.Compare(
+            self._expr(node.left),
+            [COMPARE_OPERATORS[op]() for op in node.ops],
+            [self._expr(expr) for expr in node.comparators],
+        )
 
-def _constant(node: q.Constant) -> py.Constant:
-    return py.Constant(node.value)
+    def _ternary_op(self, node: q.TernaryOp) -> py.IfExp:
+        return py.IfExp(
+            self._expr(node.test),
+            self._expr(node.body),
+            self._expr(node.orelse),
+        )
 
+    def _list(self, node: q.List) -> py.List:
+        ctx: py.expr_context = self._ctx()
+        return py.List([self._expr(elt) for elt in node.elements], ctx)
 
-def _name(node: q.Ident) -> py.Name:
-    return py.Name(node.name, _ctx())
+    def _tuple(self, node: q.Tuple) -> py.Tuple:
+        ctx: py.expr_context = self._ctx()
+        return py.Tuple([self._expr(elt) for elt in node.elements], ctx)
 
+    def _set(self, node: q.Set) -> py.Set:
+        return py.Set([self._expr(elt) for elt in node.elements])
 
-def _bool_op(node: q.BoolOp) -> py.BoolOp:
-    return py.BoolOp(
-        op=(py.Or if node.op == Tag.OR else py.And)(),
-        values=[_expr(value) for value in node.values],
-    )
+    def _dict(self, node: q.Dict) -> py.Dict:
+        return py.Dict(
+            [self._expr(key) for key in node.keys],
+            [self._expr(value) for value in node.values],
+        )
 
+    def _call(self, node: q.Call) -> py.Call:
+        return py.Call(
+            self._expr(node.func),
+            [self._expr(arg) for arg in node.args],
+            [self._keyword(kw) for kw in node.keywords],
+        )
 
-def _binary_op(node: q.BinaryOp) -> py.BinOp:
-    return py.BinOp(
-        left=_expr(node.left),
-        op=BINARY_OPERATORS[node.op](),
-        right=_expr(node.right),
-    )
+    def _keyword(self, node: q.Keyword) -> py.keyword:
+        return py.keyword(node.arg, self._expr(node.value))
 
+    def _attribute(self, node: q.Attribute) -> py.Attribute:
+        ctx: py.expr_context = self._ctx()
+        return py.Attribute(
+            self._expr(node.value),
+            node.attr,
+            ctx,
+        )
 
-def _unary_op(node: q.UnaryOp) -> py.UnaryOp:
-    return py.UnaryOp(
-        op=UNARY_OPERATORS[node.op](),
-        operand=_expr(node.operand),
-    )
+    def _subscript(self, node: q.Subscript) -> py.Subscript:
+        ctx: py.expr_context = self._ctx()
+        return py.Subscript(
+            self._expr(node.value),
+            self._expr(node.slice_),
+            ctx,
+        )
 
-
-def _comparison(node: q.Comparison) -> py.Compare:
-    return py.Compare(
-        _expr(node.left),
-        [COMPARE_OPERATORS[op]() for op in node.ops],
-        [_expr(expr) for expr in node.comparators],
-    )
-
-
-def _ternary_op(node: q.TernaryOp) -> py.IfExp:
-    return py.IfExp(
-        _expr(node.test),
-        _expr(node.body),
-        _expr(node.orelse),
-    )
-
-
-def _list(node: q.List) -> py.List:
-    ctx: py.Load | py.Store | py.Del = _ctx()
-    return py.List([_expr(elt) for elt in node.elements], ctx)
-
-
-def _tuple(node: q.Tuple) -> py.Tuple:
-    ctx: py.Load | py.Store | py.Del = _ctx()
-    return py.Tuple([_expr(elt) for elt in node.elements], ctx)
-
-
-def _set(node: q.Set) -> py.Set:
-    return py.Set([_expr(elt) for elt in node.elements])
-
-
-def _dict(node: q.Dict) -> py.Dict:
-    return py.Dict(
-        [_expr(key) for key in node.keys],
-        [_expr(value) for value in node.values],
-    )
-
-
-def _call(node: q.Call) -> py.Call:
-    return py.Call(
-        _expr(node.func),
-        [_expr(arg) for arg in node.args],
-        [_keyword(kw) for kw in node.keywords],
-    )
-
-
-def _keyword(node: q.Keyword) -> py.keyword:
-    return py.keyword(node.arg, _expr(node.value))
-
-
-def _attribute(node: q.Attribute) -> py.Attribute:
-    ctx: py.Load | py.Store | py.Del = _ctx()
-    return py.Attribute(
-        _expr(node.value),
-        node.attr,
-        ctx,
-    )
-
-
-def _subscript(node: q.Subscript) -> py.Subscript:
-    ctx: py.Load | py.Store | py.Del = _ctx()
-    return py.Subscript(
-        _expr(node.value),
-        _expr(node.slice_),
-        ctx,
-    )
-
-
-def _slice(node: q.Slice) -> py.Slice:
-    return py.Slice(
-        _expr(node.lower) if node.lower else None,
-        _expr(node.upper) if node.upper else None,
-        _expr(node.step) if node.step else None,
-    )
+    def _slice(self, node: q.Slice) -> py.Slice:
+        return py.Slice(
+            self._expr(node.lower) if node.lower else None,
+            self._expr(node.upper) if node.upper else None,
+            self._expr(node.step) if node.step else None,
+        )

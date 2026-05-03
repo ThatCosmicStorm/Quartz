@@ -1,13 +1,15 @@
-"""*The Quartz Lexer*."""
+"""*The lexer for the Quartz programming language*."""
 
 ##############################
 # IMPORTS
 ##############################
 
-from collections.abc import Callable, Iterator
-from typing import ClassVar, Literal, NoReturn
+from typing import TYPE_CHECKING, NoReturn
 
 from .tokendef import Error, Tag, Token
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
 
 ##############################
 # SET CONSTANTS
@@ -93,586 +95,523 @@ class _LexerError(Error):
 
 
 ##############################
-# STATE
+# MAIN CLASS
 ##############################
 
 
-class _State:
-    program: str
-    program_lines: Iterator[str]
-    program_line: str
-    # Index
-    i: int = 0
-    length: int
-    char: str
-    tokens: ClassVar[list[Token]] = []
-    is_eof: bool = False
-    indent_stack: ClassVar[list[int]] = [0]
-    in_parens: int = 0
-    consecutive_strings: int = 0
-    line_start: int = 0
-    line: int = 1
-    column: int = 1
-    consec_string_for_doc: Literal[2] = 2
-    match_symbols: dict[str, Callable[[], None]]
-    symbols: set[str]
+class Lexer:
+    """*The Quartz Lexer*."""
 
+    def __init__(self, program: str) -> None:
+        """*Lex a Quartz program*.
 
-_self: _State = _State()
+        Args:
+            program (str): *File input*
 
-##############################
-# HELPER FUNCTIONS
-##############################
+        """
+        self._i: int = 0
+        self._tokens: list[Token] = []
+        self._is_eof: bool = False
+        self._indent_stack: list[int] = [0]
+        self._in_parens: int = 0
+        self._line_start: int = 0
+        self._line: int = 1
+        self._column: int = 1
 
-
-def _raise_error(message: str) -> NoReturn:
-    raise _LexerError(
-        _self.line,
-        _self.column,
-        _self.program_line,
-        message,
-    )
-
-
-def _check(char: str) -> bool:
-    return _self.char == char
-
-
-def _in(set_: set[str]) -> bool:
-    return _self.char in set_
-
-
-def _next() -> None:
-    _self.i += 1
-    _self.column += 1
-    if _check("\n"):
-        if _self.i != _self.length:
-            _self.program_line: str = next(
-                _self.program_lines,
-            )
-        _self.line += 1
-        _self.column = 1
-    if _self.i != _self.length:
-        _self.char: str = _self.program[_self.i]
-    else:
-        _self.is_eof = True
-
-
-def _token(tag: Tag, tok: str = "") -> None:
-    _self.tokens.append(
-        Token(
-            tag,
-            tok,
-            _self.line,
-            _self.column,
-            _self.program_line,
-        ),
-    )
-
-
-def _eof() -> None:
-    while _self.indent_stack != [0]:
-        _self.indent_stack.pop()
-        _token(Tag.DEDENT)
-    _token(Tag.EOF)
-
-
-def _next_eof() -> bool:
-    _next()
-    if _self.is_eof:
-        _eof()
-        return True
-    return False
-
-
-##############################
-# MAIN FUNCTION
-##############################
-
-
-def main(program: str) -> list[Token]:
-    """*Lex a Quartz program*.
-
-    Args:
-        program (str): *Quartz file contents as `str`*
-
-    Returns:
-        list[Token]: *Quartz `Token`'s*
-
-    """
-    _self.program: str = program + "\n"
-
-    _self.program_lines: Iterator[str] = iter(
-        _self.program.replace(" ", "·").splitlines(),
-    )
-    _self.program_line: str = next(
-        _self.program_lines,
-    )
-    _self.length: int = len(_self.program)
-    _self.char: str = _self.program[_self.i] if _self.length > 0 else ""
-
-    _self.match_symbols: dict[str, Callable[[], None]] = {
-        "&": _ampersand,
-        "*": _asterisk,
-        "@": _match_at_sign,
-        "\\": _backslash,
-        "!": _bang,
-        "^": _caret,
-        ":": _colon,
-        "$": _dollar,
-        "=": _equal,
-        "#": _hashtag,
-        "<": _l_angle,
-        ",": _match_comma,
-        ";": _match_semicolon,
-        "-": _minus,
-        "%": _percent,
-        ".": _period,
-        "|": _pipe,
-        "+": _plus,
-        ">": _r_angle,
-        "/": _slash,
-        "~": _tilde,
-    }
-    _self.symbols: set[str] = set(_self.match_symbols.keys())
-
-    if _self.length == 0:
-        _eof()
-        return _self.tokens
-    while _check("\n"):
-        _next_eof()
-    while not _self.is_eof:
-        _match_char()
-    return _self.tokens
-
-
-##############################
-# MATCH FUNCTIONS
-##############################
-
-
-def _match_char() -> None:
-    if _check("\n"):
-        _newline()
-    elif _self.char.isspace():
-        _next_eof()
-    elif _self.char.isalpha() or _check("_"):
-        _ident()
-    elif _in(DIGITS):
-        _integer()
-    elif _check('"') or _check("'"):
-        _string()
-    else:
-        _match_brackets()
-
-
-def _match_brackets() -> None:
-    if _in(OPEN_BRACKETS):
-        _self.in_parens += 1
-    elif _in(CLOSED_BRACKETS):
-        _self.in_parens -= 1
-    else:
-        _match_remainders()
-        return
-
-    match _self.char:
-        case "(":
-            _token(Tag.L_PAREN)
-        case ")":
-            _token(Tag.R_PAREN)
-        case "[":
-            _token(Tag.L_BRACKET)
-        case "]":
-            _token(Tag.R_BRACKET)
-        case "{":
-            _token(Tag.L_BRACE)
-        case "}":
-            _token(Tag.R_BRACE)
-
-    _next_eof()
-
-
-def _match_remainders() -> None:
-    if not _in(_self.symbols):
-        _next_eof()
-        return
-    _self.match_symbols[_self.char]()
-
-
-def _match_semicolon() -> None:
-    _token(Tag.SEMICOLON)
-    _next_eof()
-
-
-def _match_comma() -> None:
-    _token(Tag.COMMA)
-    _next_eof()
-
-
-def _match_at_sign() -> None:
-    _token(Tag.AT_SIGN)
-    _next_eof()
-
-
-##############################
-# CASE FUNCTIONS
-##############################
-
-
-def _newline() -> None:
-    if _self.in_parens:
-        _next_eof()
-        return
-    if _self.tokens:  # noqa: SIM102
-        if _self.tokens[-1].tag != Tag.NEWLINE:
-            _token(Tag.NEWLINE)
-    _next_eof()
-    if not _check("\n"):
-        _indent()
-
-
-def _indent() -> None:
-    spaces: int = 0
-    while not _self.is_eof and _check(" "):
-        spaces += 1
-        _next()
-    if spaces % 4 != 0:
-        _raise_error(
-            """\
-            Inconsistent indentation.
-            Each indent level must be:
-              - FOUR characters long
-              - SPACES, not tabs""",
+        self._program: str = program + "\n"
+        self._program_lines: Iterator[str] = iter(
+            self._program.replace(" ", "·").splitlines(),
         )
-    indents: int = int(spaces / 4)
-    if indents > _self.indent_stack[-1]:
-        _self.indent_stack.append(indents)
-        _token(Tag.INDENT)
-    if indents < _self.indent_stack[-1]:
-        while indents < _self.indent_stack[-1]:
-            _self.indent_stack.pop()
-            _token(Tag.DEDENT)
-        if indents != _self.indent_stack[-1]:
-            _raise_error(
+        self._program_line: str = next(
+            self._program_lines,
+        )
+        self._length: int = len(self._program)
+        self._char: str = self._program[0] if self._length > 0 else ""
+
+        self._match_symbols: dict[str, Callable[[], None]] = {
+            "&": self._ampersand,
+            "*": self._asterisk,
+            "@": self._match_at_sign,
+            "\\": self._backslash,
+            "!": self._bang,
+            "^": self._caret,
+            ":": self._colon,
+            "$": self._dollar,
+            "=": self._equal,
+            "#": self._hashtag,
+            "<": self._l_angle,
+            ",": self._match_comma,
+            ";": self._match_semicolon,
+            "-": self._minus,
+            "%": self._percent,
+            ".": self._period,
+            "|": self._pipe,
+            "+": self._plus,
+            ">": self._r_angle,
+            "/": self._slash,
+            "~": self._tilde,
+        }
+        self._symbols: set[str] = set(self._match_symbols.keys())
+
+        if self._length == 0:
+            self._eof()
+            return
+        while self._check("\n"):
+            self._next_eof()
+        while not self._is_eof:
+            self._match_char()
+
+    ##########################
+    # Helper Functions
+    ##########################
+
+    def _raise_error(self, message: str) -> NoReturn:
+        raise _LexerError(
+            self._line,
+            self._column,
+            self._program_line,
+            message,
+        )
+
+    def _check(self, char: str) -> bool:
+        return self._char == char
+
+    def _in(self, set_: set[str]) -> bool:
+        return self._char in set_
+
+    def _next(self) -> None:
+        self._i += 1
+        self._column += 1
+        if self._check("\n"):
+            if self._i != self._length:
+                self._program_line: str = next(
+                    self._program_lines,
+                )
+            self._line += 1
+            self._column = 1
+        if self._i != self._length:
+            self._char: str = self._program[self._i]
+        else:
+            self._is_eof = True
+
+    def _token(self, tag: Tag, tok: str = "") -> None:
+        self._tokens.append(
+            Token(
+                tag,
+                tok,
+                self._line,
+                self._column,
+                self._program_line,
+            ),
+        )
+
+    def _eof(self) -> None:
+        while self._indent_stack != [0]:
+            self._indent_stack.pop()
+            self._token(Tag.DEDENT)
+        self._token(Tag.EOF)
+
+    def _next_eof(self) -> bool:
+        self._next()
+        if self._is_eof:
+            self._eof()
+            return True
+        return False
+
+    ##########################
+    # Main Getter Method
+    ##########################
+
+    def get_tokens(self) -> list[Token]:
+        """*Return the output of the lexer*.
+
+        Returns:
+            list[Token]: *Lexer output*
+
+        """
+        return self._tokens
+
+    ##########################
+    # Match Functions
+    ##########################
+
+    def _match_char(self) -> None:
+        if self._check("\n"):
+            self._newline()
+        elif self._char.isspace():
+            self._next_eof()
+        elif self._char.isalpha() or self._check("_"):
+            self._ident()
+        elif self._in(DIGITS):
+            self._integer()
+        elif self._check('"') or self._check("'"):
+            self._string()
+        else:
+            self._match_brackets()
+
+    def _match_brackets(self) -> None:
+        if self._in(OPEN_BRACKETS):
+            self._in_parens += 1
+        elif self._in(CLOSED_BRACKETS):
+            self._in_parens -= 1
+        else:
+            self._match_remainders()
+            return
+
+        match self._char:
+            case "(":
+                self._token(Tag.L_PAREN)
+            case ")":
+                self._token(Tag.R_PAREN)
+            case "[":
+                self._token(Tag.L_BRACKET)
+            case "]":
+                self._token(Tag.R_BRACKET)
+            case "{":
+                self._token(Tag.L_BRACE)
+            case "}":
+                self._token(Tag.R_BRACE)
+
+        self._next_eof()
+
+    def _match_remainders(self) -> None:
+        if not self._in(self._symbols):
+            self._next_eof()
+            return
+        self._match_symbols[self._char]()
+
+    def _match_semicolon(self) -> None:
+        self._token(Tag.SEMICOLON)
+        self._next_eof()
+
+    def _match_comma(self) -> None:
+        self._token(Tag.COMMA)
+        self._next_eof()
+
+    def _match_at_sign(self) -> None:
+        self._token(Tag.AT_SIGN)
+        self._next_eof()
+
+    ##############################
+    # Case Functions
+    ##############################
+
+    def _newline(self) -> None:
+        if self._in_parens:
+            self._next_eof()
+            return
+        if self._tokens:  # noqa: SIM102
+            if self._tokens[-1].tag != Tag.NEWLINE:
+                self._token(Tag.NEWLINE)
+        self._next_eof()
+        if not self._check("\n"):
+            self._indent()
+
+    def _indent(self) -> None:
+        spaces: int = 0
+        while not self._is_eof and self._check(" "):
+            spaces += 1
+            self._next()
+        if spaces % 4 != 0:
+            self._raise_error(
                 """\
                 Inconsistent indentation.
                 Each indent level must be:
-                  - FOUR characters long
-                  - SPACES, not tabs""",
+                - FOUR characters long
+                - SPACES, not tabs""",
             )
-    if _self.is_eof:
-        _eof()
+        indents: int = int(spaces / 4)
+        if indents > self._indent_stack[-1]:
+            self._indent_stack.append(indents)
+            self._token(Tag.INDENT)
+        if indents < self._indent_stack[-1]:
+            while indents < self._indent_stack[-1]:
+                del self._indent_stack[-1]
+                self._token(Tag.DEDENT)
+            if indents != self._indent_stack[-1]:
+                self._raise_error(
+                    """\
+                    Inconsistent indentation.
+                    Each indent level must be:
+                    - FOUR characters long
+                    - SPACES, not tabs""",
+                )
+        if self._is_eof:
+            self._eof()
 
-
-def _backslash() -> None:
-    if _next_eof():
-        return
-    if not _check("\n"):
-        return
-    _next_eof()
-
-
-def _hashtag() -> None:
-    while not _check("\n"):
-        if _next_eof():
+    def _backslash(self) -> None:
+        if self._next_eof():
             return
-    if _check("\n"):
-        _next()
-        _indent()
+        if not self._check("\n"):
+            return
+        self._next_eof()
 
+    def _hashtag(self) -> None:
+        while not self._check("\n"):
+            if self._next_eof():
+                return
+        if self._check("\n"):
+            self._next()
+            self._indent()
 
-def _ident() -> None:
-    start: int = _self.i
-    while not _self.is_eof and (_self.char.isalnum() or _check("_")):
-        _next()
-    if _check("?"):
-        _next()
-    ident: str = _self.program[start : _self.i]
-    if ident:
-        if ident in KEYWORDS:
-            _keyword(ident)
+    def _ident(self) -> None:
+        start: int = self._i
+        while not self._is_eof and (self._char.isalnum() or self._check("_")):
+            self._next()
+        if self._check("?"):
+            self._next()
+        ident: str = self._program[start : self._i]
+        if ident:
+            if ident in KEYWORDS:
+                self._keyword(ident)
+            else:
+                self._token(Tag.IDENT, ident)
+        if self._is_eof:
+            self._eof()
+
+    def _keyword(self, ident: str) -> None:  # noqa: C901, PLR0912
+        match ident:
+            case "and":
+                self._token(Tag.AND)
+            case "or":
+                self._token(Tag.OR)
+            case "not":
+                if self._tokens[-1].tag == Tag.IS:
+                    del self._tokens[-1]
+                    self._token(Tag.IS_NOT)
+                else:
+                    self._token(Tag.NOT)
+            case "is":
+                self._token(Tag.IS)
+            case "in":
+                if self._tokens[-1].tag == Tag.NOT:
+                    del self._tokens[-1]
+                    self._token(Tag.NOT_IN)
+                else:
+                    self._token(Tag.IN)
+            case "True":
+                self._token(Tag.TRUE)
+            case "False":
+                self._token(Tag.FALSE)
+            case "None":
+                self._token(Tag.NONE)
+            case _:
+                self._token(Tag.KEYWORD, ident)
+
+    def _integer(self) -> None:
+        start: int = self._i
+        while not self._is_eof and self._in(DIGITS):
+            self._next()
+            if self._check("."):
+                self._int_period(start)
+                return
+        number: str = self._program[start : self._i]
+        if number and not self._check("."):
+            self._token(Tag.INTEGER, number)
+        if self._is_eof:
+            self._eof()
+
+    def _int_period(self, start: int = 0) -> None:
+        if self._next_eof():
+            return
+        while not self._is_eof and self._in(DIGITS):
+            self._next()
+        number: str = self._program[start : self._i]
+        self._token(Tag.FLOAT, number)
+        if self._is_eof:
+            self._eof()
+
+    def _period(self) -> None:
+        if self._next_eof():
+            return
+        if self._in(DIGITS):
+            self._period_int()
+        if not self._check("."):
+            self._token(Tag.PERIOD)
+            return
+        if self._next_eof():
+            return
+        if not self._check("."):
+            self._raise_error(
+                """\
+                `..` is not a valid token.
+                Did you mean `.` or `...`?""",
+            )
+        self._token(Tag.ELLIPSIS)
+
+    def _period_int(self) -> None:
+        start: int = self._i - 1
+        while not self._is_eof and self._in(DIGITS):
+            self._next()
+        number: str = self._program[start : self._i]
+        self._token(Tag.FLOAT, number)
+        if self._is_eof:
+            self._eof()
+
+    def _string(self) -> None:
+        quote: str = '"' if self._check('"') else "'"
+        start: int = self._i
+        if self._next_eof():
+            return
+        while not (self._is_eof or self._check(quote)):
+            self._next()
+        string: str = self._program[start + 1 : self._i]
+        if self._program[start] == self._program[self._i]:
+            self._token(Tag.STRING, string)
+            if self._next_eof():
+                return
+        if self._is_eof:
+            self._eof()
+
+    ##############################
+    # Template Functions
+    ##############################
+
+    def _check_next(self, char: str, tag: Tag) -> bool:
+        if not self._check(char):
+            return False
+        self._token(tag)
+        self._next_eof()
+        return True
+
+    def _equal(self) -> None:
+        if self._next_eof():
+            return
+        if self._check_next("=", Tag.EQUAL_EQUAL):
+            return
+        if not self._check_next(">", Tag.EQUAL_ARROW):
+            self._token(Tag.EQUAL)
+
+    def _pipe(self) -> None:
+        if self._next_eof():
+            return
+        if not self._check_next("=", Tag.PIPE_EQUAL):
+            self._token(Tag.PIPE)
+
+    def _colon(self) -> None:
+        if self._next_eof():
+            return
+        if not self._check_next("=", Tag.COLON_EQUAL):
+            self._token(Tag.COLON)
+
+    def _percent(self) -> None:
+        if self._next_eof():
+            return
+        if self._check_next("=", Tag.PERCENT_EQUAL):
+            return
+        if self._check_next("{", Tag.PERCENT_L_BRACE):
+            self._in_parens += 1
+            return
+        self._token(Tag.PERCENT)
+
+    def _asterisk(self) -> None:
+        if self._next_eof():
+            return
+        if not self._check_next("=", Tag.ASTERISK_EQUAL):
+            self._token(Tag.ASTERISK)
+
+    def _plus(self) -> None:
+        if self._next_eof():
+            return
+        if not self._check_next("=", Tag.PLUS_EQUAL):
+            self._token(Tag.PLUS)
+
+    def _minus(self) -> None:
+        if self._next_eof():
+            return
+        if self._check_next("=", Tag.MINUS_EQUAL):
+            return
+        if self._check(">"):
+            self._arrow()
         else:
-            _token(Tag.IDENT, ident)
-    if _self.is_eof:
-        _eof()
+            self._token(Tag.MINUS)
 
-
-def _keyword(ident: str) -> None:  # noqa: C901, PLR0912
-    match ident:
-        case "and":
-            _token(Tag.AND)
-        case "or":
-            _token(Tag.OR)
-        case "not":
-            if _self.tokens[-1].tag == Tag.IS:
-                _self.tokens.pop()
-                _token(Tag.IS_NOT)
-            else:
-                _token(Tag.NOT)
-        case "is":
-            _token(Tag.IS)
-        case "in":
-            if _self.tokens[-1].tag == Tag.NOT:
-                _self.tokens.pop()
-                _token(Tag.NOT_IN)
-            else:
-                _token(Tag.IN)
-        case "True":
-            _token(Tag.TRUE)
-        case "False":
-            _token(Tag.FALSE)
-        case "None":
-            _token(Tag.NONE)
-        case _:
-            _token(Tag.KEYWORD, ident)
-
-
-def _integer() -> None:
-    start: int = _self.i
-    while not _self.is_eof and _in(DIGITS):
-        _next()
-        if _check("."):
-            _int_period(start)
+    def _arrow(self) -> None:
+        if self._next_eof():
             return
-    number: str = _self.program[start : _self.i]
-    if number and not _check("."):
-        _token(Tag.INTEGER, number)
-    if _self.is_eof:
-        _eof()
+        if not self._check_next("=", Tag.ARROW_EQUAL):
+            self._token(Tag.ARROW)
 
-
-def _int_period(start: int = 0) -> None:
-    if _next_eof():
-        return
-    while not _self.is_eof and _in(DIGITS):
-        _next()
-    number: str = _self.program[start : _self.i]
-    _token(Tag.FLOAT, number)
-    if _self.is_eof:
-        _eof()
-
-
-def _period() -> None:
-    if _next_eof():
-        return
-    if _in(DIGITS):
-        _period_int()
-    if not _check("."):
-        _token(Tag.PERIOD)
-        return
-    if _next_eof():
-        return
-    if not _check("."):
-        _raise_error(
-            """\
-            `..` is not a valid token.
-            Did you mean `.` or `...`?""",
-        )
-    _token(Tag.ELLIPSIS)
-
-
-def _period_int() -> None:
-    start: int = _self.i - 1
-    while not _self.is_eof and _in(DIGITS):
-        _next()
-    number: str = _self.program[start : _self.i]
-    _token(Tag.FLOAT, number)
-    if _self.is_eof:
-        _eof()
-
-
-def _string() -> None:
-    quote: str = '"' if _check('"') else "'"
-    start: int = _self.i
-    if _next_eof():
-        return
-    while not (_self.is_eof or _check(quote)):
-        _next()
-    string: str = _self.program[start + 1 : _self.i]
-    if _self.program[start] == _self.program[_self.i]:
-        _token(Tag.STRING, string)
-        if _next_eof():
+    def _l_angle(self) -> None:
+        if self._next_eof():
             return
-    if _self.is_eof:
-        _eof()
+        if self._check_next("=", Tag.L_ANGLE_EQUAL):
+            return
+        if self._check("<"):
+            self._l_angle_l_angle()
+        else:
+            self._token(Tag.L_ANGLE)
 
+    def _l_angle_l_angle(self) -> None:
+        if self._next_eof():
+            return
+        if self._check_next("<", Tag.L_ANGLE_L_ANGLE_L_ANGLE):
+            return
+        if not self._check_next("=", Tag.L_ANGLE_L_ANGLE_EQUAL):
+            self._token(Tag.L_ANGLE_L_ANGLE)
 
-##############################
-# TEMPLATE FUNCTIONS
-##############################
+    def _r_angle(self) -> None:
+        if self._next_eof():
+            return
+        if self._check_next("=", Tag.R_ANGLE_EQUAL):
+            return
+        if self._check(">"):
+            self._r_angle_r_angle()
+        else:
+            self._token(Tag.R_ANGLE)
 
+    def _r_angle_r_angle(self) -> None:
+        if self._next_eof():
+            return
+        if not self._check_next("=", Tag.R_ANGLE_R_ANGLE_EQUAL):
+            self._token(Tag.R_ANGLE_R_ANGLE)
 
-def _check_next(char: str, tag: Tag) -> bool:
-    if not _check(char):
-        return False
-    _token(tag)
-    _next_eof()
-    return True
+    def _caret(self) -> None:
+        if self._next_eof():
+            return
+        if not self._check_next("=", Tag.CARET_EQUAL):
+            self._token(Tag.CARET)
 
+    def _tilde(self) -> None:
+        if self._next_eof():
+            return
+        if self._check_next("=", Tag.TILDE_EQUAL):
+            return
+        if not self._check_next(">", Tag.TILDE_ARROW):
+            self._token(Tag.TILDE)
 
-def _equal() -> None:
-    if _next_eof():
-        return
-    if _check_next("=", Tag.EQUAL_EQUAL):
-        return
-    if not _check_next(">", Tag.EQUAL_ARROW):
-        _token(Tag.EQUAL)
+    def _slash(self) -> None:
+        if self._next_eof():
+            return
+        if self._check_next("=", Tag.SLASH_EQUAL):
+            return
+        if not self._check_next("/", Tag.SLASH_SLASH):
+            self._token(Tag.SLASH)
 
+    def _ampersand(self) -> None:
+        if self._next_eof():
+            return
+        if not self._check_next("=", Tag.AMPERSAND_EQUAL):
+            self._token(Tag.AMPERSAND)
 
-def _pipe() -> None:
-    if _next_eof():
-        return
-    if not _check_next("=", Tag.PIPE_EQUAL):
-        _token(Tag.PIPE)
+    def _bang(self) -> None:
+        if self._next_eof():
+            return
+        if not self._check_next("=", Tag.BANG_EQUAL):
+            self._raise_error(
+                """\
+                `!` is not an operator.
+                Did you mean `!=` or `not`?""",
+            )
 
-
-def _colon() -> None:
-    if _next_eof():
-        return
-    if not _check_next("=", Tag.COLON_EQUAL):
-        _token(Tag.COLON)
-
-
-def _percent() -> None:
-    if _next_eof():
-        return
-    if _check_next("=", Tag.PERCENT_EQUAL):
-        return
-    if _check_next("{", Tag.PERCENT_L_BRACE):
-        _self.in_parens += 1
-        return
-    _token(Tag.PERCENT)
-
-
-def _asterisk() -> None:
-    if _next_eof():
-        return
-    if not _check_next("=", Tag.ASTERISK_EQUAL):
-        _token(Tag.ASTERISK)
-
-
-def _plus() -> None:
-    if _next_eof():
-        return
-    if not _check_next("=", Tag.PLUS_EQUAL):
-        _token(Tag.PLUS)
-
-
-def _minus() -> None:
-    if _next_eof():
-        return
-    if _check_next("=", Tag.MINUS_EQUAL):
-        return
-    if _check(">"):
-        _arrow()
-    else:
-        _token(Tag.MINUS)
-
-
-def _arrow() -> None:
-    if _next_eof():
-        return
-    if not _check_next("=", Tag.ARROW_EQUAL):
-        _token(Tag.ARROW)
-
-
-def _l_angle() -> None:
-    if _next_eof():
-        return
-    if _check_next("=", Tag.L_ANGLE_EQUAL):
-        return
-    if _check("<"):
-        _l_angle_l_angle()
-    else:
-        _token(Tag.L_ANGLE)
-
-
-def _l_angle_l_angle() -> None:
-    if _next_eof():
-        return
-    if _check_next("<", Tag.L_ANGLE_L_ANGLE_L_ANGLE):
-        return
-    if not _check_next("=", Tag.L_ANGLE_L_ANGLE_EQUAL):
-        _token(Tag.L_ANGLE_L_ANGLE)
-
-
-def _r_angle() -> None:
-    if _next_eof():
-        return
-    if _check_next("=", Tag.R_ANGLE_EQUAL):
-        return
-    if _check(">"):
-        _r_angle_r_angle()
-    else:
-        _token(Tag.R_ANGLE)
-
-
-def _r_angle_r_angle() -> None:
-    if _next_eof():
-        return
-    if not _check_next(
-        "=",
-        Tag.R_ANGLE_R_ANGLE_EQUAL,
-    ):
-        _token(Tag.R_ANGLE_R_ANGLE)
-
-
-def _caret() -> None:
-    if _next_eof():
-        return
-    if not _check_next("=", Tag.CARET_EQUAL):
-        _token(Tag.CARET)
-
-
-def _tilde() -> None:
-    if _next_eof():
-        return
-    if _check_next("=", Tag.TILDE_EQUAL):
-        return
-    if not _check_next(">", Tag.TILDE_ARROW):
-        _token(Tag.TILDE)
-
-
-def _slash() -> None:
-    if _next_eof():
-        return
-    if _check_next("=", Tag.SLASH_EQUAL):
-        return
-    if not _check_next("/", Tag.SLASH_SLASH):
-        _token(Tag.SLASH)
-
-
-def _ampersand() -> None:
-    if _next_eof():
-        return
-    if not _check_next("=", Tag.AMPERSAND_EQUAL):
-        _token(Tag.AMPERSAND)
-
-
-def _bang() -> None:
-    if _next_eof():
-        return
-    if not _check_next("=", Tag.BANG_EQUAL):
-        _raise_error(
+    def _dollar(self) -> None:
+        if self._next_eof():
+            return
+        if self._check_next("{", Tag.DOLLAR_L_BRACE):
+            self._in_parens += 1
+            return
+        self._raise_error(
             """\
-            `!` is not an operator.
-            Did you mean `!=` or `not`?""",
+            `$` is not an identifiable token.
+            Did you mean `${` for a set?""",
         )
-
-
-def _dollar() -> None:
-    if _next_eof():
-        return
-    if _check_next("{", Tag.DOLLAR_L_BRACE):
-        _self.in_parens += 1
-        return
-    _raise_error(
-        """\
-        `$` is not an identifiable token.
-        Did you mean `${` for a set?""",
-    )
-
-
-##############################
-# END OF FILE
-##############################
