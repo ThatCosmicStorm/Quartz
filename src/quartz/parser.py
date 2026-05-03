@@ -95,25 +95,27 @@ class Parser:
 
         self._parse_statements: dict[str, Callable[[], q.Stmt]] = {
             "del": self._del,
+            "for": self._for,
             "if": self._if,
-            "while": self._while,
             "until": self._while,
+            "while": self._while,
         }
         self._keywords: set[str] = set(self._parse_statements.keys())
 
         self._simple_statements: set[Any] = {
             q.Assign,
+            q.Delete,
             q.ExprStmt,
         }
 
         self._primary_dict: dict[Tag, Callable[[], q.Constant]] = {
-            Tag.INTEGER: self._integer,
+            Tag.ELLIPSIS: self._ellipsis,
             Tag.FALSE: self._false,
             Tag.FLOAT: self._float,
+            Tag.INTEGER: self._integer,
             Tag.NONE: self._none,
             Tag.STRING: self._string,
             Tag.TRUE: self._true,
-            Tag.ELLIPSIS: self._ellipsis,
         }
         self._primary_dict_keys: set[Tag] = set(self._primary_dict.keys())
 
@@ -236,6 +238,19 @@ class Parser:
         if self._match("else"):
             orelse: list[q.Stmt] = self._suite()
         return q.If(test, body, orelse)
+
+    def _for(self) -> q.For:
+        self._expect("for")
+        target: q.Expr | None = None
+        iter_: q.Expr = self._postfix()
+        if self._match(Tag.IN):
+            target: q.Expr = iter_
+            iter_: q.Expr = self._expr()
+        body: list[q.Stmt] = self._suite()
+        orelse: list[q.Stmt] = []
+        if self._match("else"):
+            orelse: list[q.Stmt] = self._suite()
+        return q.For(target or q.Ident("_"), iter_, body, orelse)
 
     def _while(self) -> q.While:
         word: str = self._next().tok

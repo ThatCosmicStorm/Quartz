@@ -47,6 +47,8 @@ if
     "if" expr suite {"else if" expr suite} ["else" suite]
 while
     ("while" | "until") expr suite ["else" suite]
+for
+    "for" [expr "in"] expr suite ["else" suite]
 
 # ---- Statement Parts ----
 call_parameter

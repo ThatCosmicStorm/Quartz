@@ -68,6 +68,16 @@ class If(Stmt):
 
 
 @dataclass(frozen=True, slots=True)
+class For(Stmt):
+    """*A `for` loop*."""
+
+    target: Expr
+    iter_: Expr
+    body: list[Stmt]
+    orelse: list[Stmt]
+
+
+@dataclass(frozen=True, slots=True)
 class While(Stmt):
     """*A `while` loop*."""
 

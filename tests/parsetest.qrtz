@@ -3,7 +3,8 @@ lst = [s]
 lst[0] = " YOU'RE A DUMBASS "
 lst[0] -> .strip -> .lower -> print
 
-while s
+
+for s
     s -> print
     s = s[0:-1]
 

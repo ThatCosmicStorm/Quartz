@@ -152,6 +152,13 @@ class ASTCompile:
                 body=[self._stmt(sttmnt) for sttmnt in stmt.body],
                 orelse=[self._stmt(sttmnt) for sttmnt in stmt.orelse],
             )
+        if isinstance(stmt, q.For):
+            return py.For(
+                target=self._expr(stmt.target, ctx=py.Store()),
+                iter=self._expr(stmt.iter_),
+                body=[self._stmt(sttmnt) for sttmnt in stmt.body],
+                orelse=[self._stmt(sttmnt) for sttmnt in stmt.orelse],
+            )
         raise _TranspilerError
 
     def _expr(
