@@ -1,7 +1,11 @@
-string = s = " HELLO WORLD "
+string = s = "HELLO WORLD"
 lst = [s]
 lst[0] = " YOU'RE A DUMBASS "
 lst[0] -> .strip -> .lower -> print
+
+while s
+    s -> print
+    s = s[0:-1]
 
 if string == "0"
     print()

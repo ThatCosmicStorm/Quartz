@@ -96,8 +96,8 @@ class Parser:
         self._parse_statements: dict[str, Callable[[], q.Stmt]] = {
             "del": self._del,
             "if": self._if,
-            # "while": self._while,
-            # "until": self._while,
+            "while": self._while,
+            "until": self._while,
         }
         self._keywords: set[str] = set(self._parse_statements.keys())
 
@@ -231,24 +231,24 @@ class Parser:
         body: list[q.Stmt] = self._suite()
         orelse: list[q.Stmt] = []
         while self._check("else") and self._check("if", ahead=1):
-            self._next(2)
+            self._next()
             orelse: list[q.Stmt] = [self._if()]
         if self._match("else"):
             orelse: list[q.Stmt] = self._suite()
         return q.If(test, body, orelse)
 
-    # def _while(self) -> q.While:
-    #     word: str = self._next().tok
-    #     test: q.Expr = self._expr()
-    #     body: list[q.Stmt] = self._suite()
-    #     orelse: list[q.Stmt] = []
-    #     if self._match("else"):
-    #         orelse: list[q.Stmt] = self._suite()
-    #     return q.While(
-    #         test if word == "while" else q.UnaryOp(Tag.NOT, test),
-    #         body,
-    #         orelse,
-    #     )
+    def _while(self) -> q.While:
+        word: str = self._next().tok
+        test: q.Expr = self._expr()
+        body: list[q.Stmt] = self._suite()
+        orelse: list[q.Stmt] = []
+        if self._match("else"):
+            orelse: list[q.Stmt] = self._suite()
+        return q.While(
+            test if word == "while" else q.UnaryOp(Tag.NOT, test),
+            body,
+            orelse,
+        )
 
     ##############################
     # STATEMENT PARTS

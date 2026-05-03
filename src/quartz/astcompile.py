@@ -146,6 +146,12 @@ class ASTCompile:
                 body=[self._stmt(sttmnt) for sttmnt in stmt.body],
                 orelse=[self._stmt(sttmnt) for sttmnt in stmt.orelse],
             )
+        if isinstance(stmt, q.While):
+            return py.While(
+                test=self._expr(stmt.test),
+                body=[self._stmt(sttmnt) for sttmnt in stmt.body],
+                orelse=[self._stmt(sttmnt) for sttmnt in stmt.orelse],
+            )
         raise _TranspilerError
 
     def _expr(
