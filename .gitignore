@@ -4,7 +4,8 @@
 !op_parse_test.qrtz
 
 asttesting.py
+explain.md
+potential-grammar.md
 
 /src/quartz.egg-info
 /src/quartz/__pycache__
-explain.md

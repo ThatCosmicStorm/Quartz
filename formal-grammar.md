@@ -1,8 +1,6 @@
 # Formal Grammar
 
-- The grammar for the Quartz programming language.
-- Reminder: `working-grammar.md` contains the grammar for all *currently* implemented features.
-- This file, `formal-grammar.md`, is the plan/goal.
+- The grammar for all *currently* implemented features of the Quartz programming language.
 
 ## Syntax
 
@@ -31,79 +29,24 @@ statement
     | compound
 
 simple
-    assert
-    | assign
-    | break
-    | continue
+    assign
     | delete
-    | import
-    | pass
-    | raise
-    | return
-    | type_alias
-    | yield
 
 compound
-    class
-    | decorator
-    | for
-    | function_definition
-    | if
-    | match
-    | struct
-    | while
+    if
+    while
 
 # ---- Simple Cases ----
-annotated_assign
-    expr ":" TYPE ["=" expr]
-assert
-    "assert" expr ["," STRING]
 assign
-    annotated_assign | augmented_assign | regular_assign
-augmented_assign
-    expr ((ASSIGNMENT_OP expr) | pipe_assign)
-basic_import
-    "import" expr ["as" IDENT] {"," expr ["as" IDENT]}
-break
-    "break"
-continue
-    "continue"
+    expr ("=" expr)+
 delete
-    "del" expr
-import
-    basic_import | selective_import
-pass
-    "pass"
-raise
-    "raise" [expr ["from" expr]]
-regular_assign
-    expr "=" expr
-return
-    [expr] "<<<" ["if" expr ["else" expr]]
-selective_import
-    "from" expr "import" ("*" | import_params)
-type_alias
-    "type" IDENT "=" TYPE
-yield
-    "yield" expr
+    "del" expr {"," expr}
 
 # ---- Compound Cases ----
-class
-    ["pub"] "class" IDENT ["(" IDENT {"," IDENT} [","] ")"] class_suite
-decorator
-    "@" IDENT NEWLINE (decorator | function_definition)
-for
-    "for" [expr "in"] expr suite
-function_definition
-    ["pub"] "fn" IDENT "(" [def_params] ")" ["~>" TYPE] func_suite
 if
-    "if" expr suite {"else" "if" expr suite} ["else" suite]
-match
-    "match" expr match_suite
-struct
-    ["pub"] "struct" IDENT class_suite
+    "if" expr suite {"else if" expr suite} ["else" suite]
 while
-    ("while" | "until") expr suite
+    ("while" | "until") expr suite ["else" suite]
 
 # ---- Statement Parts ----
 call_parameter
@@ -111,32 +54,14 @@ call_parameter
     | (IDENT ["=" expr])
 call_params
     call_parameter {"," call_parameter} [","]
-def_parameter
-    IDENT [":" TYPE] ["=" expr]
-def_params
-    def_parameter {"," def_parameter} [","]
-import_parameter
-    IDENT ["as" IDENT]
-import_params
-    import_parameter {"," import_parameter}
-pipe_assign
-    "->=" pipe_stage {"->" pipe_stage}
-pipe_attribute
-    ["."] {IDENT "."} IDENT
 pipe_stage
-    pipe_attribute ["(" [call_params] ")"]
+    ["."] postfix
 stmt_end
     NEWLINE
 
 # ---- Blocks ----
 suite
     NEWLINE INDENT statement+ DEDENT
-class_suite
-    NEWLINE INDENT [DOCSTRING NEWLINE] (IDENT ":" TYPE ["=" expr] NEWLINE)+ function_definition+ DEDENT
-func_suite
-    NEWLINE INDENT [DOCSTRING NEWLINE] statement+ DEDENT
-match_suite
-    NEWLINE INDENT ("case" expr suite)+ DEDENT
 
 # ---- Expressions ----
 expr
@@ -184,18 +109,13 @@ slice
 primary
     BOOLEAN
     | DICT
-    | DICT_COMPREHENSION
-    | DOCSTRING
     | ELLIPSIS
     | FLOAT
-    | GENERATOR_COMPREHENSION
     | IDENT
     | INTEGER
     | LIST
-    | LIST_COMPREHENSION
     | NONE
     | SET
-    | SET_COMPREHENSION
     | STRING
     | TUPLE
     | "(" expr ")"
@@ -227,33 +147,6 @@ COLLECTION_ITEMS
 DICT_ITEMS
     expr ":" expr {"," expr ":" expr} [","]
 
-GENERATOR_COMPREHENSION
-    "(" COMPREHENSION ")"
-LIST_COMPREHENSION
-    "[" COMPREHENSION "]"
-SET_COMPREHENSION
-    "${" COMPREHENSION "}"
-DICT_COMPREHENSION
-    "%{" DICT_COMP "}"
-COMPREHENSION
-    expr ("for" expr "in" expr)+ {"if" expr}
-DICT_COMP
-    expr ":" expr ("for" expr "in" expr)+ {"if" expr}
-
-# Excludes "pipe assign" operator `->=`
-ASSIGNMENT_OP
-    "="
-    | "+="
-    | "-="
-    | "*="
-    | "/="
-    | "^="
-    | "%="
-    | "&="
-    | "|="
-    | "~="
-    | ">>="
-    | "<<="
 COMPARISON_OP
     "<"
     | ">"
@@ -275,8 +168,6 @@ FLOAT
     /(\d+\.\d*|\.\d+)/
 STRING
     /f?(("(\\.|[^"\\])*")|('(\\.|[^'\\])'))/
-DOCSTRING
-    /f?"""(\\.|[^"\\])*"""/
 NEWLINE
     /\n+/
 
