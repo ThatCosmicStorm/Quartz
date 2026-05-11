@@ -31,6 +31,7 @@ statement
 simple
     assign
     | delete
+    | return
 
 compound
     if
@@ -41,6 +42,8 @@ assign
     expr ("=" expr)+
 delete
     "del" expr {"," expr}
+return
+    "return" [expr]
 
 # ---- Compound Cases ----
 if

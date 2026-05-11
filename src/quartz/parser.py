@@ -107,6 +107,7 @@ class Parser:
             q.Assign,
             q.Delete,
             q.ExprStmt,
+            q.Return,
         }
 
         self._primary_dict: dict[Tag, Callable[[], q.Constant]] = {
@@ -223,6 +224,12 @@ class Parser:
         while self._match(Tag.COMMA):
             targets.append(self._expr())
         return q.Delete(targets)
+
+    def _return(self) -> q.Return:
+        self._expect("return")
+        if self._check(Tag.NEWLINE):
+            return q.Return()
+        return q.Return(self._expr())
 
     ##############################
     # COMPOUND CASES

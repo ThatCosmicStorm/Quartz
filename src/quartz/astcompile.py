@@ -138,6 +138,9 @@ class ASTCompile:
             q.Delete: lambda stmt: py.Delete(
                 [self._expr(trgt, py.Del()) for trgt in stmt.targets],
             ),
+            q.Return: lambda stmt: py.Return(
+                None if stmt.value is None else self._expr(stmt.value),
+            ),
             q.If: lambda stmt: py.If(
                 test=self._expr(stmt.test),
                 body=[self._stmt(sttmnt) for sttmnt in stmt.body],

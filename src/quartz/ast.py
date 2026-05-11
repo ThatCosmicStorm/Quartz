@@ -254,4 +254,4 @@ class FunctionDefinition(Stmt):
 class Return(Stmt):
     """*A `return` statement*."""
 
-    value: Expr
+    value: Expr | None = None
