@@ -129,37 +129,61 @@ class ASTCompile:
     ##########################
 
     def _stmt(self, stmt: q.Stmt) -> py.stmt:
-        if isinstance(stmt, q.ExprStmt):
-            return py.Expr(self._expr(stmt.expr))
-        if isinstance(stmt, q.Assign):
-            return py.Assign(
+        handlers = {
+            q.ExprStmt: lambda stmt: py.Expr(self._expr(stmt.expr)),
+            q.Assign: lambda stmt: py.Assign(
                 [self._expr(trgt, py.Store()) for trgt in stmt.targets],
                 self._expr(stmt.value),
-            )
-        if isinstance(stmt, q.Delete):
-            return py.Delete(
+            ),
+            q.Delete: lambda stmt: py.Delete(
                 [self._expr(trgt, py.Del()) for trgt in stmt.targets],
-            )
-        if isinstance(stmt, q.If):
-            return py.If(
+            ),
+            q.If: lambda stmt: py.If(
                 test=self._expr(stmt.test),
                 body=[self._stmt(sttmnt) for sttmnt in stmt.body],
                 orelse=[self._stmt(sttmnt) for sttmnt in stmt.orelse],
-            )
-        if isinstance(stmt, q.While):
-            return py.While(
+            ),
+            q.While: lambda stmt: py.While(
                 test=self._expr(stmt.test),
                 body=[self._stmt(sttmnt) for sttmnt in stmt.body],
                 orelse=[self._stmt(sttmnt) for sttmnt in stmt.orelse],
-            )
-        if isinstance(stmt, q.For):
-            return py.For(
+            ),
+            q.For: lambda stmt: py.For(
                 target=self._expr(stmt.target, ctx=py.Store()),
                 iter=self._expr(stmt.iter_),
                 body=[self._stmt(sttmnt) for sttmnt in stmt.body],
                 orelse=[self._stmt(sttmnt) for sttmnt in stmt.orelse],
-            )
+            ),
+            q.FunctionDefinition: lambda stmt: py.FunctionDef(
+                name=stmt.name,
+                args=self._arguments(stmt.args),
+                body=[self._stmt(sttmnt) for sttmnt in stmt.body],
+                decorator_list=[],
+            ),
+        }
+        for stmt_type, handler in handlers.items():
+            if isinstance(stmt, stmt_type):
+                return handler(stmt)
         raise _TranspilerError
+
+    def _arguments(self, args: q.Arguments) -> py.arguments:
+        return py.arguments(
+            posonlyargs=[],
+            args=[self._arg(arg) for arg in args.args],
+            kwonlyargs=[],
+            vararg=None,
+            kwarg=None,
+            kw_defaults=[],
+            defaults=[self._expr(dflt) for dflt in args.defaults],
+        )
+
+    def _arg(self, arg: q.Arg) -> py.arg:
+        if arg.annotation is None:
+            return py.arg(arg=arg.arg)
+        return py.arg(
+            arg=arg.arg,
+            annotation=self._expr(arg.annotation),
+        )
 
     def _expr(
         self,

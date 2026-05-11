@@ -15,3 +15,9 @@ else if string == "1"
     print("deez nuts")
 else
     "hellooooo?" -> print
+
+
+fn new_print(x) None
+    print(x)
+
+new_print("the function works")

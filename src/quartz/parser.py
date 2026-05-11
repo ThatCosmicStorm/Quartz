@@ -95,6 +95,7 @@ class Parser:
 
         self._parse_statements: dict[str, Callable[[], q.Stmt]] = {
             "del": self._del,
+            "fn": self._function_definition,
             "for": self._for,
             "if": self._if,
             "until": self._while,
@@ -265,14 +266,23 @@ class Parser:
             orelse,
         )
 
+    def _function_definition(self) -> q.FunctionDefinition:
+        self._expect("fn")
+        name: str = self._expect(Tag.IDENT).tok
+        self._expect(Tag.L_PAREN)
+        args: q.Arguments = q.Arguments()
+        if not self._check(Tag.R_PAREN):
+            args: q.Arguments = self._def_params()
+        self._expect(Tag.R_PAREN)
+        returns: q.Expr = q.Constant()
+        if not self._check(Tag.NEWLINE):
+            returns: q.Expr = self._type()
+        body: list[q.Stmt] = self._suite()
+        return q.FunctionDefinition(name, args, body, returns)
+
     ##############################
     # STATEMENT PARTS
     ##############################
-
-    def _call_parameter(self) -> q.Expr:
-        if self._check(Tag.IDENT) and self._check(Tag.EQUAL, ahead=1):
-            return q.Keyword(self._next(2).tok, self._expr())
-        return self._expr()
 
     def _call_params(self) -> tuple[list[q.Expr], list[q.Keyword]]:
         lst: list[q.Expr] = [self._call_parameter()]
@@ -286,6 +296,53 @@ class Parser:
             arg for arg in lst if isinstance(arg, q.Keyword)
         ]
         return (args, keywords)
+
+    def _call_parameter(self) -> q.Expr:
+        if self._check(Tag.IDENT) and self._check(Tag.EQUAL, ahead=1):
+            return q.Keyword(self._next(2).tok, self._expr())
+        return self._expr()
+
+    def _def_params(self) -> q.Arguments:
+        lst: list[q.Arg] = [self._def_parameter()]
+        defaults: list[q.Expr] = []
+        while self._match(Tag.COMMA) and not self._check(Tag.R_PAREN):
+            lst.append(self._def_parameter())
+            if self._match(Tag.EQUAL):
+                default_params: tuple[
+                    list[q.Arg],
+                    list[q.Expr],
+                ] = self._def_default_params(lst[-1])
+                lst.extend(default_params[0])
+                defaults: list[q.Expr] = default_params[1]
+                break
+        self._match(Tag.COMMA)
+        return q.Arguments(args=lst, defaults=defaults)
+
+    def _def_default_params(
+        self,
+        first_arg: q.Arg,
+    ) -> tuple[list[q.Arg], list[q.Expr]]:
+        args: list[q.Arg] = [first_arg]
+        defaults: list[q.Expr] = [self._expr()]
+        while self._match(Tag.COMMA) and not self._check(Tag.R_PAREN):
+            args.append(self._def_parameter())
+            self._expect(Tag.EQUAL)
+            defaults.append(self._expr())
+        self._match(Tag.COMMA)
+        return (args, defaults)
+
+    def _def_parameter(self) -> q.Arg:
+        arg: str = self._expect(Tag.IDENT).tok
+        annotation: q.Expr | None = None
+        if self._match(Tag.COLON):
+            annotation: q.Expr = self._type()
+        return q.Arg(arg, annotation)
+
+    def _type(self) -> q.Expr:
+        typ: q.Expr = self._postfix()
+        while self._match(Tag.PIPE):
+            typ: q.BinaryOp = q.BinaryOp(Tag.PIPE, typ, self._postfix())
+        return typ
 
     ##############################
     # BLOCKS
@@ -551,9 +608,3 @@ class Parser:
         self._match(Tag.COMMA)
         self._expect(Tag.R_BRACE)
         return q.Dict([pair[0] for pair in lst], [pair[1] for pair in lst])
-
-    def _type(self) -> q.Expr:
-        typ: q.Expr = self._postfix()
-        while self._match(Tag.PIPE):
-            typ: q.BinaryOp = q.BinaryOp(Tag.PIPE, typ, self._postfix())
-        return typ

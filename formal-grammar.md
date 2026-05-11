@@ -45,21 +45,33 @@ delete
 # ---- Compound Cases ----
 if
     "if" expr suite {"else if" expr suite} ["else" suite]
-while
-    ("while" | "until") expr suite ["else" suite]
 for
     "for" [expr "in"] expr suite ["else" suite]
+function_definition
+    "fn" IDENT "(" [def_params] ")" [type] func_suite
+while
+    ("while" | "until") expr suite ["else" suite]
 
 # ---- Statement Parts ----
+call_params
+    call_parameter {"," call_parameter} [","]
 call_parameter
     expr
     | (IDENT ["=" expr])
-call_params
-    call_parameter {"," call_parameter} [","]
+
+def_params
+    def_parameter {"," def_parameter} {"," def_default_param} [","]
+def_default_param
+    def_parameter "=" expr
+def_parameter
+    IDENT [":" type]
+
 pipe_stage
     ["."] postfix
 stmt_end
     NEWLINE
+type
+    postfix {"|" postfix}
 
 # ---- Blocks ----
 suite
@@ -109,22 +121,35 @@ subscript
 slice
     [expr] ":" [expr] [":" [expr]]
 primary
+    constant
+    | collection
+    | "(" expr ")"
+collection
+    dict
+    | list
+    | set
+    | tuple
+constant
     BOOLEAN
-    | DICT
     | ELLIPSIS
     | FLOAT
-    | IDENT
     | INTEGER
-    | LIST
     | NONE
-    | SET
     | STRING
-    | TUPLE
-    | "(" expr ")"
 
 # ---- Other Tokens ----
-TYPE
-    postfix {"|" postfix}
+tuple
+    "(" [collection_items | (expr ",")] ")"
+list
+    "[" [collection_items] "]"
+set
+    "${" [collection_items] "}"
+dict
+    "%{" [dict_items] "}"
+collection_items
+    expr {"," expr} [","]
+dict_items
+    expr ":" expr {"," expr ":" expr} [","]
 
 BOOLEAN
     "True"
@@ -135,19 +160,6 @@ NONE
 
 ELLIPSIS
     "..."
-
-TUPLE
-    "(" [COLLECTION_ITEMS | (expr ",")] ")"
-LIST
-    "[" [COLLECTION_ITEMS] "]"
-SET
-    "${" [COLLECTION_ITEMS] "}"
-DICT
-    "%{" [DICT_ITEMS] "}"
-COLLECTION_ITEMS
-    expr {"," expr} [","]
-DICT_ITEMS
-    expr ":" expr {"," expr ":" expr} [","]
 
 COMPARISON_OP
     "<"
@@ -169,7 +181,7 @@ INTEGER
 FLOAT
     /(\d+\.\d*|\.\d+)/
 STRING
-    /f?(("(\\.|[^"\\])*")|('(\\.|[^'\\])'))/
+    /("(\\.|[^"\\])*")|('(\\.|[^'\\])')/
 NEWLINE
     /\n+/
 

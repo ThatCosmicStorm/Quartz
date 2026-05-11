@@ -217,3 +217,41 @@ class Ident(Expr):
     """*Identifier*."""
 
     name: str
+
+
+@dataclass(frozen=True, slots=True)
+class Arg:
+    """*A single argument in a list*."""
+
+    arg: str
+    annotation: Expr | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Arguments:
+    """*The arguments for a function*."""
+
+    posonlyargs: list[Arg] = field(default_factory=list)
+    args: list[Arg] = field(default_factory=list)
+    kwonlyargs: list[Arg] = field(default_factory=list)
+    vararg: Arg | None = None
+    kwarg: Arg | None = None
+    kw_defaults: list[Expr] = field(default_factory=list)
+    defaults: list[Expr] = field(default_factory=list)
+
+
+@dataclass(frozen=True, slots=True)
+class FunctionDefinition(Stmt):
+    """*A function definition*."""
+
+    name: str
+    args: Arguments
+    body: list[Stmt]
+    returns: Expr
+
+
+@dataclass(frozen=True, slots=True)
+class Return(Stmt):
+    """*A `return` statement*."""
+
+    value: Expr
