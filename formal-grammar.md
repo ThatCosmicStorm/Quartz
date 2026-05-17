@@ -48,6 +48,7 @@ return
 # ---- Compound Cases ----
 if
     "if" expr suite {"else if" expr suite} ["else" suite]
+    | "unless" expr suite
 for
     "for" [expr "in"] expr suite ["else" suite]
 function_definition

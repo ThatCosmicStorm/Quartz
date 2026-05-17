@@ -98,6 +98,7 @@ class Parser:
             "fn": self._function_definition,
             "for": self._for,
             "if": self._if,
+            "unless": self._if,
             "until": self._while,
             "while": self._while,
         }
@@ -236,6 +237,10 @@ class Parser:
     ##############################
 
     def _if(self) -> q.If:
+        if self._match("unless"):
+            test: q.UnaryOp = q.UnaryOp(Tag.NOT, self._expr())
+            body: list[q.Stmt] = self._suite()
+            return q.If(test, body, [])
         self._expect("if")
         test: q.Expr = self._expr()
         body: list[q.Stmt] = self._suite()
