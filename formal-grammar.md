@@ -25,7 +25,7 @@ program
 
 # ---- Statements ----
 statement
-    ((expr | simple) stmt_end)
+    (expr | simple) stmt_end
     | compound
 
 simple
@@ -35,7 +35,9 @@ simple
 
 compound
     if
-    while
+    | for
+    | function_definition
+    | while
 
 # ---- Simple Cases ----
 assign
@@ -92,7 +94,8 @@ disjunction
 conjunction
     inversion {"and" inversion}
 inversion
-    ("not" inversion) | comparison
+    "not" inversion
+    | comparison
 
 comparison
     bitwise_or {COMPARISON_OP bitwise_or}
@@ -109,19 +112,21 @@ sum
 term
     factor {("*" | "/" | "//" | "%") factor}
 factor
-    power | (("+" | "-" | "~") factor)
+    power
+    | ("+" | "-" | "~") factor
 power
     postfix {"^" factor}
 postfix
     primary {postfix_op}
 postfix_op
-    ("." IDENT)
-    | ("(" [call_params] ")")
-    | ("[" subscript_list "]")
+    "." IDENT
+    | "(" [call_params] ")"
+    | "[" subscript_list "]"
 subscript_list
     subscript {"," subscript} [","]
 subscript
-    slice | expr
+    slice
+    | expr
 slice
     [expr] ":" [expr] [":" [expr]]
 primary
