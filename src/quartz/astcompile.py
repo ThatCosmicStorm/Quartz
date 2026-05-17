@@ -129,7 +129,7 @@ class ASTCompile:
     ##########################
 
     def _stmt(self, stmt: q.Stmt) -> py.stmt:
-        handlers = {
+        handlers: dict[Any, Callable[[Any], Any]] = {
             q.ExprStmt: lambda stmt: py.Expr(self._expr(stmt.expr)),
             q.Assign: lambda stmt: py.Assign(
                 [self._expr(trgt, py.Store()) for trgt in stmt.targets],
@@ -164,10 +164,7 @@ class ASTCompile:
                 decorator_list=[],
             ),
         }
-        for stmt_type, handler in handlers.items():
-            if isinstance(stmt, stmt_type):
-                return handler(stmt)
-        raise _TranspilerError
+        return handlers[type(stmt)](stmt)
 
     def _arguments(self, args: q.Arguments) -> py.arguments:
         return py.arguments(
