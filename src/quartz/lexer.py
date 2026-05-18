@@ -36,38 +36,26 @@ DIGITS: set[str] = {
 KEYWORDS: set[str] = {
     "and",
     "as",
-    "assert",
     "break",
     "case",
     "class",
     "continue",
     "del",
-    "dict",
     "else",
     "False",
-    "float",
     "fn",
     "for",
     "from",
     "if",
     "import",
     "in",
-    "int",
     "is",
-    "list",
     "match",
     "None",
     "not",
     "or",
-    "pass",
-    "pub",
     "raise",
-    "set",
-    "str",
-    "struct",
     "True",
-    "tuple",
-    "type",
     "until",
     "while",
     "yield",
@@ -539,6 +527,8 @@ class Lexer:
             return
         if self._check("<"):
             self._l_angle_l_angle()
+        if self._check("-"):
+            self._l_angle_minus()
         else:
             self._token(Tag.L_ANGLE)
 
@@ -549,6 +539,14 @@ class Lexer:
             return
         if not self._check_next("=", Tag.L_ANGLE_L_ANGLE_EQUAL):
             self._token(Tag.L_ANGLE_L_ANGLE)
+
+    def _l_angle_minus(self) -> None:
+        if self._next_eof():
+            return
+        if not self._check_next(">", Tag.L_ANGLE_MINUS_R_ANGLE):
+            self._raise_error(
+                """Did you mean `<->`?""",
+            )
 
     def _r_angle(self) -> None:
         if self._next_eof():
@@ -599,9 +597,7 @@ class Lexer:
             return
         if not self._check_next("=", Tag.BANG_EQUAL):
             self._raise_error(
-                """\
-                `!` is not an operator.
-                Did you mean `!=` or `not`?""",
+                """Did you mean `!=` or `not`?""",
             )
 
     def _dollar(self) -> None:

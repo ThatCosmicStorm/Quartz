@@ -55,6 +55,7 @@ class Tag(Enum):
     L_ANGLE_L_ANGLE = "<<"
     L_ANGLE_L_ANGLE_EQUAL = "<<="
     L_ANGLE_L_ANGLE_L_ANGLE = "<<<"
+    L_ANGLE_MINUS_R_ANGLE = "<->"
     L_BRACE = "{"
     L_BRACKET = "["
     L_PAREN = "("

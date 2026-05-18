@@ -52,17 +52,6 @@ COMPARISON_OPS: set[Tag] = {
     Tag.R_ANGLE_EQUAL,
 }
 
-COMPOUND_WORDS: set[str] = {
-    "class",
-    "for",
-    "fn",
-    "if",
-    "pub",
-    "struct",
-    "until",
-    "while",
-}
-
 ##############################
 # ERROR DEFINITION
 ##############################
@@ -402,12 +391,12 @@ class Parser:
 
     def _ternary(self) -> q.Expr:
         body: q.Expr = self._disjunction()
-        if not self._check("if"):
+        if not self._check(Tag.L_ANGLE_MINUS_R_ANGLE):
             return body
+        self._expect(Tag.L_ANGLE_MINUS_R_ANGLE)
+        orelse: q.Expr = self._expr()
         self._expect("if")
         test: q.Expr = self._expr()
-        self._expect("else")
-        orelse: q.Expr = self._expr()
         return q.TernaryOp(body, test, orelse)
 
     def _disjunction(self) -> q.Expr:

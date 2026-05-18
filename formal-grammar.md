@@ -88,7 +88,8 @@ expr
     ternary {"->" pipe_stage}
 
 ternary
-    disjunction ["if" expr "else" expr]
+    disjunction ["<->" expr "if" expr]
+
 disjunction
     conjunction {"or" conjunction}
 conjunction

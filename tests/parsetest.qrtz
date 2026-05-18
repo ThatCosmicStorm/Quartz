@@ -1,6 +1,6 @@
 string = s = "HELLO WORLD"
-lst = [s]
-lst[0] = " YOU'RE A DUMBASS "
+lst = [s,]
+lst[0] = " YOU'RE A GREAT PERSON "
 lst[0] -> .strip -> .lower -> print
 
 
@@ -21,3 +21,6 @@ fn new_print(x) None
     print(x)
 
 new_print("the function works")
+new_print2 = fn (x) => print(x)
+new_print2("this function also works")
+
