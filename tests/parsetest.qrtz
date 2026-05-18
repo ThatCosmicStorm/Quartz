@@ -16,14 +16,15 @@ else if string == "1"
 else
     "hellooooo?" -> print
 
-
 fn new_print(x) None
-    print(x)
+    string = x
+    print(string)
 
-new_print("the function works")
+new_string = new_print("the function works")
 
 new_print2 = fn (x) => print(x)
 
-new_print2("this function also works")
+(3 <-> 4 if False) -> str -> print
+
 
 (3 <-> 4 if True) -> str -> print

@@ -82,7 +82,7 @@ class Parser:
         self._token: Token = self._tokens[self._i]
         self._length: int = len(self._tokens)
 
-        self._parse_statements: dict[str, Callable[[], q.Stmt]] = {
+        self._parse_statements: dict[str | Tag, Callable[[], q.Stmt]] = {
             "del": self._del,
             "fn": self._function_definition,
             "for": self._for,
@@ -90,8 +90,9 @@ class Parser:
             "unless": self._if,
             "until": self._while,
             "while": self._while,
+            Tag.L_ANGLE_L_ANGLE_L_ANGLE: self._return,
         }
-        self._keywords: set[str] = set(self._parse_statements.keys())
+        self._keywords: set[str | Tag] = set(self._parse_statements.keys())
 
         self._simple_statements: set[Any] = {
             q.Assign,
@@ -141,17 +142,18 @@ class Parser:
         )
         return if_ahead and in_
 
-    def _in(self, set_: set[Tag] | set[str], ahead: int = 0) -> bool:
+    def _in(self, set_: set[Tag] | set[str | Tag], ahead: int = 0) -> bool:
         i: int = self._i + ahead
         if_ahead: bool = i < self._length
         tag: bool = self._tokens[i].tag in set_
         tok: bool = self._tokens[i].tok in set_
         return if_ahead and (tag or tok)
 
-    def _match(self, type_: str | Tag) -> Token | None:
+    def _match(self, type_: str | Tag) -> bool:
         if type_ in {self._token.tag, self._token.tok}:
-            return self._next()
-        return None
+            self._next()
+            return True
+        return False
 
     def _expect(self, type_: str | Tag) -> Token:
         if type_ in {self._token.tok, self._token.tag}:
@@ -191,10 +193,12 @@ class Parser:
 
     def _match_stmt(self) -> q.Stmt:
         if self._in(self._keywords):
-            return self._parse_statements[self._token.tok]()
+            return self._parse_statements[self._token.tok or self._token.tag]()
         expr: q.Expr = self._expr()
         if self._match(Tag.EQUAL):
             return self._assign(expr)
+        if self._check(Tag.L_ANGLE_L_ANGLE_L_ANGLE):
+            return self._return(expr)
         return q.ExprStmt(expr)
 
     ##############################
@@ -215,11 +219,17 @@ class Parser:
             targets.append(self._expr())
         return q.Delete(targets)
 
-    def _return(self) -> q.Return:
-        self._expect("return")
-        if self._check(Tag.NEWLINE):
-            return q.Return()
-        return q.Return(self._expr())
+    def _return(self, expr: q.Expr | None = None) -> q.Return | q.If:
+        self._expect(Tag.L_ANGLE_L_ANGLE_L_ANGLE)
+        if not self._check("if", "unless"):
+            return q.Return(expr)
+        if_typ: str = self._next().tok
+        test: q.Expr = self._expr()
+        if if_typ == "unless":
+            test = q.UnaryOp(Tag.NOT, test)
+        if_stmt: q.If = q.If(test, [q.Return(expr)], [])
+        self._match(Tag.NEWLINE)
+        return if_stmt
 
     ##############################
     # COMPOUND CASES
@@ -289,7 +299,6 @@ class Parser:
         lst: list[q.Expr] = [self._call_parameter()]
         while self._match(Tag.COMMA) and not self._check(Tag.R_PAREN):
             lst.append(self._call_parameter())
-        self._match(Tag.COMMA)
         args: list[q.Expr] = [
             arg for arg in lst if not isinstance(arg, q.Keyword)
         ]
@@ -309,14 +318,12 @@ class Parser:
         while self._match(Tag.COMMA) and not self._check(Tag.R_PAREN):
             lst.append(self._def_parameter())
             if self._match(Tag.EQUAL):
-                default_params: tuple[
-                    list[q.Arg],
-                    list[q.Expr],
-                ] = self._def_default_params(lst[-1])
+                default_params: tuple[list[q.Arg], list[q.Expr]] = (
+                    self._def_default_params(lst[-1])
+                )
                 lst.extend(default_params[0])
                 defaults: list[q.Expr] = default_params[1]
                 break
-        self._match(Tag.COMMA)
         return q.Arguments(args=lst, defaults=defaults)
 
     def _def_default_params(
@@ -329,7 +336,6 @@ class Parser:
             args.append(self._def_parameter())
             self._expect(Tag.EQUAL)
             defaults.append(self._expr())
-        self._match(Tag.COMMA)
         return (args, defaults)
 
     def _def_parameter(self) -> q.Arg:
@@ -371,6 +377,10 @@ class Parser:
     def _base_expr(self) -> q.Expr:
         if self._check("fn"):
             return self._lambda()
+        if self._check("match"):
+            return self._match_expr()
+        if self._check(Tag.PIPE):
+            return self._pipeline()
         return self._ternary()
 
     def _pipes(self, first: q.Expr) -> q.Expr:
@@ -405,6 +415,12 @@ class Parser:
         self._expect(Tag.R_PAREN)
         self._expect(Tag.EQUAL_ARROW)
         return q.Lambda(q.Arguments(args=args), self._expr())
+
+    def _match_expr(self) -> q.Expr:
+        return q.Expr()
+
+    def _pipeline(self) -> q.Expr:
+        return q.Expr()
 
     def _ternary(self) -> q.Expr:
         body: q.Expr = self._disjunction()
@@ -541,7 +557,7 @@ class Parser:
         if self._token.tag in self._primary_dict:
             return self._primary_dict[self._token.tag]()
         if self._check(Tag.IDENT):
-            return q.Ident(self._next().tok)
+            return self._ident()
         if self._match(Tag.L_PAREN):
             return self._tuple()
         if self._match(Tag.L_BRACKET):
@@ -553,6 +569,9 @@ class Parser:
         return self._raise_error(
             f"UnknownPrimary: {self._token.tag} {self._token.tok}",
         )
+
+    def _ident(self) -> q.Ident:
+        return q.Ident(self._next().tok)
 
     def _integer(self) -> q.Constant:
         return q.Constant(int(self._next().tok))
@@ -585,7 +604,6 @@ class Parser:
         lst: list[q.Expr] = [self._expr()]
         while self._match(Tag.COMMA) and not self._check(Tag.R_BRACKET):
             lst.append(self._expr())
-        self._match(Tag.COMMA)
         self._expect(Tag.R_BRACKET)
         return q.List(lst)
 
@@ -598,7 +616,6 @@ class Parser:
         lst: list[q.Expr] = [expr]
         while self._match(Tag.COMMA) and not self._check(Tag.R_PAREN):
             lst.append(self._expr())
-        self._match(Tag.COMMA)
         self._expect(Tag.R_PAREN)
         return q.Tuple(lst)
 
@@ -608,7 +625,6 @@ class Parser:
         lst: list[q.Expr] = [self._expr()]
         while self._match(Tag.COMMA) and not self._check(Tag.R_BRACE):
             lst.append(self._expr())
-        self._match(Tag.COMMA)
         self._expect(Tag.R_BRACE)
         return q.Set(lst)
 
@@ -623,6 +639,5 @@ class Parser:
             key: q.Expr = self._expr()
             self._expect(Tag.COLON)
             lst.append((key, self._expr()))
-        self._match(Tag.COMMA)
         self._expect(Tag.R_BRACE)
         return q.Dict([pair[0] for pair in lst], [pair[1] for pair in lst])

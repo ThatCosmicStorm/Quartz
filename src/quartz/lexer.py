@@ -527,6 +527,7 @@ class Lexer:
             return
         if self._check("<"):
             self._l_angle_l_angle()
+            return
         if self._check("-"):
             self._l_angle_minus()
         else:

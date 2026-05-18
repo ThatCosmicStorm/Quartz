@@ -45,7 +45,7 @@ assign
 delete
     "del" expr {"," expr}
 return
-    "return" [expr]
+    [expr] "<<<" [("if" | "unless") expr]
 
 # ---- Compound Cases ----
 if
