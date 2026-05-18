@@ -85,8 +85,19 @@ suite
 
 # ---- Expressions ----
 expr
-    ternary {"->" pipe_stage}
+    base_expr {pipe}
 
+pipe
+    "->" pipe_stage
+
+base_expr
+    lambda
+    | ternary
+
+lambda
+    "fn" "(" [lambda_params] ")" "=>" expr
+lambda_params
+    IDENT {"," IDENT} [","]
 ternary
     disjunction ["<->" expr "if" expr]
 

@@ -21,6 +21,9 @@ fn new_print(x) None
     print(x)
 
 new_print("the function works")
+
 new_print2 = fn (x) => print(x)
+
 new_print2("this function also works")
 
+(3 <-> 4 if True) -> str -> print

@@ -173,11 +173,11 @@ class Call(Expr):
 
 @dataclass(frozen=True, slots=True)
 class TernaryOp(Op):
-    """*Ternary operation: a if b else c*."""
+    """*Ternary operation: a <-> b if c*."""
 
-    test: Expr  # a
-    body: Expr  # b
-    orelse: Expr  # c
+    body: Expr  # a
+    orelse: Expr  # b
+    test: Expr  # c
 
 
 @dataclass(frozen=True, slots=True)
@@ -248,6 +248,14 @@ class FunctionDefinition(Stmt):
     args: Arguments
     body: list[Stmt]
     returns: Expr
+
+
+@dataclass(frozen=True, slots=True)
+class Lambda(Expr):
+    """*An anonymous function*."""
+
+    args: Arguments
+    body: Expr
 
 
 @dataclass(frozen=True, slots=True)

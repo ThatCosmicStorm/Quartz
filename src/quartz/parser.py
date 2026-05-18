@@ -363,12 +363,17 @@ class Parser:
     ##############################
 
     def _expr(self) -> q.Expr:
-        expr: q.Expr = self._ternary()
+        expr: q.Expr = self._base_expr()
         if not self._check(Tag.ARROW):
             return expr
-        return self._pipeline(expr)
+        return self._pipes(expr)
 
-    def _pipeline(self, first: q.Expr) -> q.Expr:
+    def _base_expr(self) -> q.Expr:
+        if self._check("fn"):
+            return self._lambda()
+        return self._ternary()
+
+    def _pipes(self, first: q.Expr) -> q.Expr:
         stage: q.Expr = first
         while self._match(Tag.ARROW):
             args: list[q.Expr] = []
@@ -389,6 +394,18 @@ class Parser:
             )
         return stage
 
+    def _lambda(self) -> q.Lambda:
+        self._expect("fn")
+        self._expect(Tag.L_PAREN)
+        args: list[q.Arg] = []
+        if not self._check(Tag.R_PAREN):
+            args.append(q.Arg(self._next().tok))
+            while self._match(Tag.COMMA) and not self._check(Tag.R_PAREN):
+                args.append(q.Arg(self._next().tok))
+        self._expect(Tag.R_PAREN)
+        self._expect(Tag.EQUAL_ARROW)
+        return q.Lambda(q.Arguments(args=args), self._expr())
+
     def _ternary(self) -> q.Expr:
         body: q.Expr = self._disjunction()
         if not self._check(Tag.L_ANGLE_MINUS_R_ANGLE):
@@ -397,7 +414,7 @@ class Parser:
         orelse: q.Expr = self._expr()
         self._expect("if")
         test: q.Expr = self._expr()
-        return q.TernaryOp(body, test, orelse)
+        return q.TernaryOp(body, orelse, test)
 
     def _disjunction(self) -> q.Expr:
         expr: q.Expr = self._conjunction()
