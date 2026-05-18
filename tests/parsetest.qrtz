@@ -26,5 +26,9 @@ new_print2 = fn (x) => print(x)
 
 (3 <-> 4 if False) -> str -> print
 
+fn factorial(n) int | None
+    <<< if n < 0
+    1 <<< if n == 0
+    factorial(n - 1) * n <<<
 
-(3 <-> 4 if True) -> str -> print
+5 -> factorial -> print
