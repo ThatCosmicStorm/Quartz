@@ -8,7 +8,7 @@ import ast
 import sys
 from pathlib import Path
 from pprint import pprint
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from .astcompile import ASTCompile
 from .lexer import Lexer
@@ -64,7 +64,9 @@ def _quartz(program: str, filename: Path, *, debug: bool) -> None:
     code: CodeType = compile(module, filename=filename, mode="exec")
     if debug:
         print("\n" + "Output:")
-    exec(code)  # noqa: S102
+
+    custom_globals: dict[str, Any] = {}
+    exec(code, custom_globals)  # noqa: S102
 
 
 ##############################
