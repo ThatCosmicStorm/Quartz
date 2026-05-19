@@ -473,6 +473,8 @@ class Lexer:
     def _pipe(self) -> None:
         if self._next_eof():
             return
+        if self._check_next(">", Tag.PIPE_ARROW):
+            return
         if not self._check_next("=", Tag.PIPE_EQUAL):
             self._token(Tag.PIPE)
 

@@ -88,7 +88,7 @@ expr
     base_expr {pipe}
 
 pipe
-    "->" pipe_stage
+    ("->" | "|>") pipe_stage
 
 base_expr
     lambda

@@ -32,3 +32,5 @@ fn factorial(n) int | None
     factorial(n - 1) * n <<<
 
 5 -> factorial -> print
+
+lst[0] -> .strip |> print -> .lower -> print

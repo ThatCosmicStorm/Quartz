@@ -71,6 +71,7 @@ class Tag(Enum):
     PERCENT_L_BRACE = "%{"
     PERIOD = "."
     PIPE = "|"
+    PIPE_ARROW = "|>"
     PIPE_EQUAL = "|="
     PLUS = "+"
     PLUS_EQUAL = "+="

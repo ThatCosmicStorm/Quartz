@@ -223,9 +223,9 @@ class Parser:
         self._expect(Tag.L_ANGLE_L_ANGLE_L_ANGLE)
         if not self._check("if", "unless"):
             return q.Return(expr)
-        if_typ: str = self._next().tok
+        if_type: str = self._next().tok
         test: q.Expr = self._expr()
-        if if_typ == "unless":
+        if if_type == "unless":
             test = q.UnaryOp(Tag.NOT, test)
         if_stmt: q.If = q.If(test, [q.Return(expr)], [])
         self._match(Tag.NEWLINE)
@@ -385,7 +385,9 @@ class Parser:
 
     def _pipes(self, first: q.Expr) -> q.Expr:
         stage: q.Expr = first
-        while self._match(Tag.ARROW):
+        while self._check(Tag.ARROW, Tag.PIPE_ARROW):
+            arrow_type: Tag = self._next().tag
+            input_: q.Expr = stage
             args: list[q.Expr] = []
             if self._match(Tag.PERIOD):
                 stage = q.Attribute(stage, self._expect(Tag.IDENT).tok)
@@ -402,6 +404,13 @@ class Parser:
                 args=args,
                 keywords=kws,
             )
+            if arrow_type == Tag.PIPE_ARROW:
+                stage: q.Subscript = q.Subscript(
+                    q.Tuple(
+                        [stage, input_],
+                    ),
+                    q.Constant(1),
+                )
         return stage
 
     def _lambda(self) -> q.Lambda:
