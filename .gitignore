@@ -1,11 +1,8 @@
 *.qrtz
 
-!parsetest.qrtz
-!op_parse_test.qrtz
+!/tests/
 
-asttesting.py
-explain.md
-potential-grammar.md
+prev_grammar.md
 
 /src/quartz.egg-info
 /src/quartz/__pycache__

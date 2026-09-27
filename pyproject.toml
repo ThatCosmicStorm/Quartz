@@ -1,11 +1,19 @@
 [project]
 name = "quartz"
-version = "0.1.0"
-# Comes from `match` syntax
-requires-python = ">= 3.10"
+version = "0.2.0"
+authors = [
+    { name="Randall 'R2' Dunkin", email="astronomerr2@gmail.com" },
+]
+description = "The Quartz Programming Language"
+readme = "README.md"
+requires-python = ">= 3.14"
+license = "MIT"
 
 [project.scripts]
 quartz = "quartz.__main__:main"
 
 [project.urls]
 Repository = "https://github.com/thatcosmicstorm/quartz"
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx="(?i)Copyright \\(C\\)"

@@ -1,52 +1,19 @@
 # Quartz
 
-![Quartz logo](https://github.com/thatcosmicstorm/Quartz/blob/main/Quartz_Logo.png)
+## WORK IN PROGRESS
 
-## Introduction
-
-- Welcome to Quartz!
-- Quartz is a syntactic and structural transformation over Python.
-- Its defining feature is *pipelines*.
-
-## Code Snippets
-
-<table>
-<tr>
-<th>Python</th>
-<th>Quartz</th>
-</tr>
-<tr>
-<td>
-
-```py
-print(" HELLO WORLD ".strip().lower())
-```
-
-</td>
-<td>
-
-```qrtz
-" HELLO WORLD " -> .strip -> .lower -> print
-```
-
-</td>
-</tr>
-</table>
-
-- Both programs accomplish the same task.
-- Comparing the two, Quartz conveys a much more understandable flow of functions.
+- Quartz is undergoing a complete transformation and is currently nonfunctioning.
+  - Check previous commits for older, working versions of Quartz.
+- **Open issues on GitHub if there are any problems, ideas, suggestions, comments, etc.**
+- Licensed under the MIT License.
+- Taken a "NO AI" pledge.
 
 ## Installation
 
-- Requires Python 3.10 or newer
+- Requires Python 3.14+
 
 ```bash
 git clone https://github.com/thatcosmicstorm/quartz.git
 cd quartz
 pip install -e .
 ```
-
-## WORK IN PROGRESS
-
-- Pay attention to the `formal-grammar.md` file, as it contains the grammar for all *currently* implemented features.
-- **Open issues on GitHub if there are any problems, ideas, suggestions, comments, etc.**

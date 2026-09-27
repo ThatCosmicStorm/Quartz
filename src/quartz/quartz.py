@@ -1,109 +1,112 @@
 #! /usr/bin/env python
+# Copyright (c) Randall "R2" Dunkin
+# Licensed under the MIT License.
 """*The interpreter for the Quartz programming language*."""
 
-##############################
-# IMPORTS
-##############################
+# ruff: disable[F401]
 import ast
 import sys
 from pathlib import Path
-from pprint import pprint
-from typing import TYPE_CHECKING, Any, Literal
+from textwrap import dedent
+from typing import TYPE_CHECKING, Literal, Never
 
-from .astcompile import ASTCompile
-from .lexer import Lexer
-from .parser import Parser
+from .lexer import lex
+from .parser import parse
+from .tokendef import Error
 
 if TYPE_CHECKING:
     from types import CodeType
 
     from .ast import Program
-    from .tokendef import Token
+    from .tokendef import Position, Token
+# ruff: enable[F401]
 
-NUM_OF_VALID_ARGS: Literal[2] = 2
-
-##############################
-# ERROR & CLEAR TERMINAL
-##############################
+MINIMUM_ARGS: Literal[2] = 2
 
 
-class _NumberOfArgsError(Exception):
-    def __init__(self) -> None:
-        super().__init__(
-            "Usage: `quartz` `filename` [`flag`]",
+def main() -> None:
+    """*Use `quartz.py` in the command line*."""
+
+    def raise_error(message: str, pos: Position, code: str) -> Never:
+        sys.exit(
+            dedent(
+                f"""\
+                Ln {pos.ln}, col {pos.col}
+
+                {code.split("\n")[pos.ln - 1]}
+                {(" " * pos.col)[:-2]}^
+
+                {message}\n""",
+            ),
         )
 
+    def print_debug_info(
+        lexed: list[Token],
+        parsed: Program,
+    ) -> None:
+        lex_info: str = "\nLexer Output:\n" + "\n".join(
+            dedent(
+                f"""{token.tag:<10}\
+                {(token.tok if token.tag != "NEWLINE" else ""):<30}\
+                Ln {token.pos.ln:<5}\
+                Col {token.pos.col}""",
+            )
+            for token in lexed
+        )
+        parsed_info: str = "\nParser Output:\n" + "\n".join(
+            map(repr, parsed.statements),
+        )
 
-def _clear_terminal() -> None:
+        print(lex_info + parsed_info)
+
+        # module_info = "\nAST Compiler Output:\n" + ast.dump(
+        #     module,
+        #     indent=4,
+        # )
+
+        # print(lex_info + parsed_info + module_info)
+
+    def quartz(program: str, _filename: Path, *, debug: bool) -> None:
+        lexed: Error | list[Token] = lex(program)
+        if isinstance(lexed, Error):
+            raise_error(lexed.msg, lexed.pos, program)
+        parsed: Error | Program = parse(lexed)
+        if isinstance(parsed, Error):
+            raise_error(parsed.msg, parsed.pos, program)
+
+        if debug:
+            print_debug_info(lexed, parsed)
+
+        # module: ast.Module = ast.Module()
+        # ast.fix_missing_locations(module)
+
+        # if debug:
+        #     print_debug_info(lexed, parsed, module)
+
+        # code: CodeType = compile(module, filename=filename, mode="exec")
+        # exec(code, globals={})
+
+    # Clear terminal
     print("\033[H\033[2J", end="")
 
-
-##############################
-# QUARTZ
-##############################
-
-
-def _quartz(program: str, filename: Path, *, debug: bool) -> None:
-    if debug:
-        print("File input:")
-        print(program)
-    tokens: list[Token] = Lexer(program).get_tokens()
-    if debug:
-        print("\n" + "Lexer:")
-        pprint(tokens)
-    prog: Program = Parser(tokens).get_program()
-    if debug:
-        print("\n" + "Parser:")
-        for stmt in prog.statements:
-            pprint(stmt)
-    module: ast.Module = ASTCompile(prog).get_module()
-    if debug:
-        print("\n" + "AST Compile:")
-        print(ast.dump(module, indent=4))
-    ast.fix_missing_locations(module)
-    code: CodeType = compile(module, filename=filename, mode="exec")
-    if debug:
-        print("\n" + "Output:")
-
-    custom_globals: dict[str, Any] = {}
-    exec(code, custom_globals)  # noqa: S102
-
-
-##############################
-# MAIN FUNCTION
-##############################
-
-
-def main(
-    filename: str = "",
-) -> None:
-    """*Use `quartz.py` in the command line*.
-
-    No interpreter mode yet.
-
-    Args:
-        filename (str): *Path to Quartz file*
-
-    Raises:
-        _NumberOfArgsError: *Only takes two arguments*
-
-    """
-    _clear_terminal()
-
-    num_of_args: int = len(sys.argv)
-    if num_of_args < NUM_OF_VALID_ARGS:
-        raise _NumberOfArgsError
-
-    file: Path = Path(filename) if filename else Path(sys.argv[1])
-    debug: bool = (
-        bool(sys.argv[2] == "-debug")
-        if num_of_args > NUM_OF_VALID_ARGS
-        else False
-    )
+    try:
+        file: Path = Path(sys.argv[1])
+    except IndexError:
+        sys.exit(
+            dedent(
+                """\
+                Usage: `quartz` `filename` [`-debug`]
+                Please provide an existing path for `filename`.""",
+            ),
+        )
     try:
         with Path.open(file, encoding="utf8") as f:
-            _quartz(f.read(), file, debug=debug)
+            quartz(
+                f.read(),
+                file,
+                debug=sys.argv[2] == "-debug"
+                if len(sys.argv) >= MINIMUM_ARGS + 1
+                else False,
+            )
     except FileNotFoundError:
-        sys.exit(
-            f"Error: File '{sys.argv[1]}' not found",
-        )
+        sys.exit(f"File '{sys.argv[1]}' not found")
